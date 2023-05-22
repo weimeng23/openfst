@@ -26,7 +26,7 @@ bool RandEquivalent(const FstClass &fst1, const FstClass &fst2,
                     int32 seed, ssize_t num_paths, float delta,
                     int path_length) {
   if (!ArcTypesMatch(fst1, fst2, "RandEquivalent")) return false;
-  RandEquivalentInnerArgs1 args(fst1, fst2, num_paths, delta, seed,
+  RandEquivalentInnerArgs1 args(fst1, fst2, seed, num_paths, delta,
                                 path_length);
   RandEquivalentArgs1 args_with_retval(args);
 
@@ -52,8 +52,10 @@ bool RandEquivalent(const FstClass &fst1, const FstClass &fst2, int32 seed,
 
 REGISTER_FST_OPERATION(RandEquivalent, StdArc, RandEquivalentArgs1);
 REGISTER_FST_OPERATION(RandEquivalent, LogArc, RandEquivalentArgs1);
+REGISTER_FST_OPERATION(RandEquivalent, Log64Arc, RandEquivalentArgs1);
 REGISTER_FST_OPERATION(RandEquivalent, StdArc, RandEquivalentArgs2);
 REGISTER_FST_OPERATION(RandEquivalent, LogArc, RandEquivalentArgs2);
+REGISTER_FST_OPERATION(RandEquivalent, Log64Arc, RandEquivalentArgs2);
 
 }  // namespace script
 }  // namespace fst

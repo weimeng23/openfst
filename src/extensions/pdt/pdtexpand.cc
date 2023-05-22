@@ -25,6 +25,8 @@
 
 DEFINE_string(pdt_parentheses, "", "PDT parenthesis label pairs.");
 DEFINE_bool(connect, true, "Trim output");
+DEFINE_bool(keep_parentheses, false, "Keep PDT parentheses in result.");
+DEFINE_string(weight, "", "Weight threshold");
 
 
 int main(int argc, char **argv) {
@@ -41,19 +43,29 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  s::FstClass *ifst = s::FstClass::Read(argv[1]);
+  string in_name = (argc > 1 && (strcmp(argv[1], "-") != 0)) ? argv[1] : "";
+  string out_name = argc > 2 ? argv[2] : "";
+
+  s::FstClass *ifst = s::FstClass::Read(in_name);
   if (!ifst) return 1;
 
-  if (FLAGS_pdt_parentheses.empty())
+  if (FLAGS_pdt_parentheses.empty()) {
     LOG(ERROR) << argv[0] << ": No PDT parenthesis label pairs provided";
+    return 1;
+  }
 
   vector<pair<int64, int64> > parens;
   fst::ReadLabelPairs(FLAGS_pdt_parentheses, &parens, false);
 
-  s::VectorFstClass ofst(ifst->ArcType());
-  s::PdtExpand(*ifst, parens, &ofst, FLAGS_connect);
+  s::WeightClass weight_threshold = FLAGS_weight.empty() ?
+      s::WeightClass::Zero() :
+      s::WeightClass(ifst->WeightType(), FLAGS_weight);
 
-  ofst.Write(argc > 2 ? argv[2] : "");
+  s::VectorFstClass ofst(ifst->ArcType());
+  s::PdtExpand(*ifst, parens, &ofst, s::PdtExpandOptions(
+      FLAGS_connect, FLAGS_keep_parentheses, weight_threshold));
+
+  ofst.Write(out_name);
 
   return 0;
 }

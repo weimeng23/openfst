@@ -27,7 +27,7 @@
 // corresponding to these.
 
 // If you have a new arc type you'd like these operations to work with,
-// use the REGISTER_ALL_FST_OPERATIONS macro defined in fstcsript.h
+// use the REGISTER_FST_OPERATIONS macro defined in fstcsript.h
 
 // If you have a custom operation you'd like to define, you need four
 // components. In the following, assume you want to create a new operation
@@ -41,8 +41,8 @@
 //     a single struct. The template structs in arg-packs.h provide a handy
 //     way to do this. In Foo's case, that might look like this:
 //
-//       typedef BinaryProcArgPack<const FstClass &,
-//                                 MutableFstClass *> FooArgs;
+//       typedef args::Package<const FstClass &,
+//                             MutableFstClass *> FooArgs;
 //
 //     Note: this package of args is going to be passed by non-const pointer.
 //
@@ -169,7 +169,7 @@ struct Operation {
 // Macro for registering new types of operations.
 
 #define REGISTER_FST_OPERATION(Op, Arc, ArgPack)                        \
-  static Operation<ArgPack>::Registerer                                 \
+  static fst::script::Operation<ArgPack>::Registerer                \
   arc_dispatched_operation_ ## ArgPack ## Op ## Arc ## _registerer(     \
       make_pair(#Op, Arc::Type()), Op<Arc>)
 
@@ -186,8 +186,9 @@ void Apply(const string &op_name, const string &arc_type,
   typename OpReg::OpType op = reg->GetOperation(op_name, arc_type);
 
   if (op == 0) {
-    LOG(ERROR) << "No operation found for \"" << op_name << "\" on "
+    FSTERROR() << "No operation found for \"" << op_name << "\" on "
                << "arc type " << arc_type;
+    return;
   }
 
   op(args);

@@ -27,34 +27,7 @@ namespace script {
 enum RandArcSelection {
   UNIFORM_ARC_SELECTOR,
   LOG_PROB_ARC_SELECTOR,
-};
-
-// This is to prevent log probabilities from working with other than
-// StdArc and LogArc
-template<class A>
-struct LogProbArcSelectorGuard {
-  typedef typename A::StateId StateId;
-  typedef typename A::Weight Weight;
-
-  explicit LogProbArcSelectorGuard(int seed) {
-    LOG(FATAL) << "LogProbArcSelectorGuard: bad weight type: "
-               << Weight::Type();
-  }
-  size_t operator()(const Fst<A> &fst, StateId s) const { return 0; }
-};
-
-template<class T>
-struct LogProbArcSelectorGuard<ArcTpl<TropicalWeightTpl<T> > >
-    : public LogProbArcSelector<ArcTpl<TropicalWeightTpl<T> > > {
-  LogProbArcSelectorGuard(int seed = time(0))
-      : LogProbArcSelector<ArcTpl<TropicalWeightTpl<T> > >(seed) {}
-};
-
-template<class T>
-struct LogProbArcSelectorGuard<ArcTpl<LogWeightTpl<T> > >
-    : public LogProbArcSelector<ArcTpl<LogWeightTpl<T> > > {
-  LogProbArcSelectorGuard(int seed = time(0))
-      : LogProbArcSelector<ArcTpl<LogWeightTpl<T> > >(seed) {}
+  FAST_LOG_PROB_ARC_SELECTOR
 };
 
 typedef args::Package<const FstClass &, MutableFstClass*, int32,
@@ -68,14 +41,22 @@ void RandGen(RandGenArgs *args) {
   const RandGenOptions<RandArcSelection> &opts = args->arg4;
 
   if (opts.arc_selector == UNIFORM_ARC_SELECTOR) {
+    UniformArcSelector<Arc> arc_selector(seed);
     RandGenOptions< UniformArcSelector<Arc> >
-        ropts(UniformArcSelector<Arc>(seed), opts.max_length,
-              opts.npath);
+        ropts(arc_selector, opts.max_length,
+              opts.npath, opts.weighted);
+    RandGen(ifst, ofst, ropts);
+  } else if (opts.arc_selector == FAST_LOG_PROB_ARC_SELECTOR) {
+    FastLogProbArcSelector<Arc> arc_selector(seed);
+    RandGenOptions< FastLogProbArcSelector<Arc> >
+        ropts(arc_selector, opts.max_length,
+              opts.npath, opts.weighted);
     RandGen(ifst, ofst, ropts);
   } else {
-    RandGenOptions< LogProbArcSelectorGuard<Arc> >
-        ropts(LogProbArcSelectorGuard<Arc>(seed), opts.max_length,
-              opts.npath);
+    LogProbArcSelector<Arc> arc_selector(seed);
+    RandGenOptions< LogProbArcSelector<Arc> >
+        ropts(arc_selector, opts.max_length,
+              opts.npath, opts.weighted);
     RandGen(ifst, ofst, ropts);
   }
 }

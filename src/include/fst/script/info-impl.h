@@ -30,7 +30,10 @@ using std::vector;
 #include <fst/fst.h>
 #include <fst/lookahead-matcher.h>
 #include <fst/matcher.h>
+#include <fst/queue.h>
 #include <fst/test-properties.h>
+#include <fst/verify.h>
+#include <fst/visit.h>
 
 namespace fst {
 
@@ -49,7 +52,7 @@ template <class A> class FstInfo {
   // then only minimal info is computed and can be requested.
   FstInfo(const Fst<A> &fst, bool test_properties,
           const string &arc_filter_type = "any",
-          string info_type = "auto")
+          string info_type = "auto", bool verify = true)
       : fst_type_(fst.Type()),
         input_symbols_(fst.InputSymbols() ?
                        fst.InputSymbols()->Name() : "none"),
@@ -57,19 +60,29 @@ template <class A> class FstInfo {
                         fst.OutputSymbols()->Name() : "none"),
         nstates_(0), narcs_(0), start_(kNoStateId), nfinal_(0),
         nepsilons_(0), niepsilons_(0), noepsilons_(0),
-        naccess_(0), ncoaccess_(0), nconnect_(0), nscc_(0),
-        arc_filter_type_(arc_filter_type) {
-    if (info_type == "long")
+        naccess_(0), ncoaccess_(0), nconnect_(0), ncc_(0), nscc_(0),
+        input_match_type_(MATCH_NONE), output_match_type_(MATCH_NONE),
+        input_lookahead_(false), output_lookahead_(false),
+        properties_(0), arc_filter_type_(arc_filter_type), long_info_(true) {
+    if (info_type == "long") {
       long_info_ = true;
-    else if (info_type == "short")
+    } else if (info_type == "short") {
       long_info_ = false;
-    else if (info_type == "auto")
+    } else if (info_type == "auto") {
       long_info_ = fst.Properties(kExpanded, false);
-    else
-      LOG(FATAL) << "Bad info type: " << info_type;
+    } else {
+      FSTERROR() << "Bad info type: " << info_type;
+      return;
+    }
 
     if (!long_info_)
       return;
+
+    // If the FST is not sane, we return.
+    if (verify && !Verify(fst)) {
+      FSTERROR() << "FstInfo: Verify: FST not well-formed.";
+      return;
+    }
 
     start_ = fst.Start();
     properties_ = fst.Properties(kFstProperties, test_properties);
@@ -95,31 +108,57 @@ template <class A> class FstInfo {
       }
     }
 
-    vector<StateId> scc;
-    vector<bool> access, coaccess;
-    uint64 props = 0;
-    SccVisitor<Arc> scc_visitor(&scc, &access, &coaccess, &props);
-    if (arc_filter_type == "any")
-      DfsVisit(fst, &scc_visitor);
-    else if (arc_filter_type == "epsilon")
-      DfsVisit(fst, &scc_visitor, EpsilonArcFilter<Arc>());
-    else if (arc_filter_type == "iepsilon")
-      DfsVisit(fst, &scc_visitor, InputEpsilonArcFilter<Arc>());
-    else if (arc_filter_type == "oepsilon")
-      DfsVisit(fst, &scc_visitor, OutputEpsilonArcFilter<Arc>());
-    else
-      LOG(FATAL) << "Bad arc filter type: " << arc_filter_type;
+    {
+      vector<StateId> cc;
+      CcVisitor<Arc> cc_visitor(&cc);
+      FifoQueue<StateId> fifo_queue;
+      if (arc_filter_type == "any") {
+        Visit(fst, &cc_visitor, &fifo_queue);
+      } else if (arc_filter_type == "epsilon") {
+        Visit(fst, &cc_visitor, &fifo_queue, EpsilonArcFilter<Arc>());
+      } else if (arc_filter_type == "iepsilon") {
+        Visit(fst, &cc_visitor, &fifo_queue, InputEpsilonArcFilter<Arc>());
+      } else if (arc_filter_type == "oepsilon") {
+        Visit(fst, &cc_visitor, &fifo_queue, OutputEpsilonArcFilter<Arc>());
+      } else {
+        FSTERROR() << "Bad arc filter type: " << arc_filter_type;
+        return;
+      }
 
+      for (StateId s = 0; s < cc.size(); ++s) {
+        if (cc[s] >= ncc_)
+          ncc_ = cc[s] + 1;
+      }
+    }
 
-    for (StateId s = 0; s < scc.size(); ++s) {
-      if (access[s])
-        ++naccess_;
-      if (coaccess[s])
-        ++ncoaccess_;
-      if (access[s] && coaccess[s])
-        ++nconnect_;
-      if (scc[s] >= nscc_)
-        nscc_ = scc[s] + 1;
+    {
+      vector<StateId> scc;
+      vector<bool> access, coaccess;
+      uint64 props = 0;
+      SccVisitor<Arc> scc_visitor(&scc, &access, &coaccess, &props);
+      if (arc_filter_type == "any") {
+        DfsVisit(fst, &scc_visitor);
+      } else if (arc_filter_type == "epsilon") {
+        DfsVisit(fst, &scc_visitor, EpsilonArcFilter<Arc>());
+      } else if (arc_filter_type == "iepsilon") {
+        DfsVisit(fst, &scc_visitor, InputEpsilonArcFilter<Arc>());
+      } else if (arc_filter_type == "oepsilon") {
+        DfsVisit(fst, &scc_visitor, OutputEpsilonArcFilter<Arc>());
+      } else {
+        FSTERROR() << "Bad arc filter type: " << arc_filter_type;
+        return;
+      }
+
+      for (StateId s = 0; s < scc.size(); ++s) {
+        if (access[s])
+          ++naccess_;
+        if (coaccess[s])
+          ++ncoaccess_;
+        if (access[s] && coaccess[s])
+          ++nconnect_;
+        if (scc[s] >= nscc_)
+          nscc_ = scc[s] + 1;
+      }
     }
 
     LookAheadMatcher< Fst<A> > imatcher(fst, MATCH_INPUT);
@@ -154,13 +193,14 @@ template <class A> class FstInfo {
   int64 NumAccessible() const { CheckLong(); return naccess_; }
   int64 NumCoAccessible() const { CheckLong(); return ncoaccess_; }
   int64 NumConnected() const { CheckLong(); return nconnect_; }
+  int64 NumCc() const { CheckLong(); return ncc_; }
   int64 NumScc() const { CheckLong(); return nscc_; }
   uint64 Properties() const { CheckLong(); return properties_; }
 
  private:
   void CheckLong() const {
     if (!long_info_)
-      LOG(FATAL) << "FstInfo: method only available with long info version";
+      FSTERROR() << "FstInfo: method only available with long info version";
   }
 
   string fst_type_;
@@ -176,6 +216,7 @@ template <class A> class FstInfo {
   int64 naccess_;
   int64 ncoaccess_;
   int64 nconnect_;
+  int64 ncc_;
   int64 nscc_;
   MatchType input_match_type_;
   MatchType output_match_type_;
@@ -189,34 +230,38 @@ template <class A> class FstInfo {
 
 template <class A>
 void PrintFstInfo(const FstInfo<A> &fstinfo, bool pipe = false) {
-  FILE *fp = pipe ? stderr : stdout;
+  ostream &os = pipe ? cerr : cout;
 
-  fprintf(fp, "%-50s%s\n", "fst type",
-          fstinfo.FstType().c_str());
-    fprintf(fp, "%-50s%s\n", "arc type",
-            fstinfo.ArcType().c_str());
-  fprintf(fp, "%-50s%s\n", "input symbol table",
-          fstinfo.InputSymbols().c_str());
-  fprintf(fp, "%-50s%s\n", "output symbol table",
-          fstinfo.OutputSymbols().c_str());
+  ios_base::fmtflags old = os.setf(ios::left);
+  os.width(50);
+  os << "fst type" <<  fstinfo.FstType() << endl;
+  os.width(50);
+  os << "arc type" << fstinfo.ArcType() << endl;
+  os.width(50);
+  os << "input symbol table" << fstinfo.InputSymbols() << endl;
+  os.width(50);
+  os << "output symbol table" << fstinfo.OutputSymbols() << endl;
 
-  if (!fstinfo.LongInfo())
+  if (!fstinfo.LongInfo()) {
+    os.setf(old);
     return;
+  }
 
-  fprintf(fp, "%-50s%lld\n", "# of states",
-          fstinfo.NumStates());
-  fprintf(fp, "%-50s%lld\n", "# of arcs",
-          fstinfo.NumArcs());
-  fprintf(fp, "%-50s%lld\n", "initial state",
-          fstinfo.Start());
-  fprintf(fp, "%-50s%lld\n", "# of final states",
-          fstinfo.NumFinal());
-  fprintf(fp, "%-50s%lld\n", "# of input/output epsilons",
-          fstinfo.NumEpsilons());
-  fprintf(fp, "%-50s%lld\n", "# of input epsilons",
-          fstinfo.NumInputEpsilons());
-  fprintf(fp, "%-50s%lld\n", "# of output epsilons",
-          fstinfo.NumOutputEpsilons());
+  os.width(50);
+  os << "# of states" << fstinfo.NumStates() << endl;
+  os.width(50);
+  os << "# of arcs" << fstinfo.NumArcs() << endl;
+  os.width(50);
+  os << "initial state" << fstinfo.Start() << endl;
+  os.width(50);
+  os << "# of final states" << fstinfo.NumFinal() << endl;
+  os.width(50);
+  os << "# of input/output epsilons" << fstinfo.NumEpsilons() << endl;
+  os.width(50);
+  os << "# of input epsilons" << fstinfo.NumInputEpsilons() << endl;
+  os.width(50);
+  os << "# of output epsilons" << fstinfo.NumOutputEpsilons() << endl;
+  os.width(50);
 
   string arc_type = "";
   if (fstinfo.ArcFilterType() == "epsilon")
@@ -227,42 +272,52 @@ void PrintFstInfo(const FstInfo<A> &fstinfo, bool pipe = false) {
     arc_type = "output-epsilon ";
 
   string accessible_label = "# of " +  arc_type + "accessible states";
-  fprintf(fp, "%-50s%lld\n", accessible_label.c_str(),
-          fstinfo.NumAccessible());
+  os.width(50);
+  os << accessible_label << fstinfo.NumAccessible() << endl;
   string coaccessible_label = "# of " +  arc_type + "coaccessible states";
-  fprintf(fp, "%-50s%lld\n", coaccessible_label.c_str(),
-          fstinfo.NumCoAccessible());
+  os.width(50);
+  os << coaccessible_label << fstinfo.NumCoAccessible() << endl;
   string connected_label = "# of " +  arc_type + "connected states";
-  fprintf(fp, "%-50s%lld\n", connected_label.c_str(),
-          fstinfo.NumConnected());
+  os.width(50);
+  os << connected_label << fstinfo.NumConnected() << endl;
+  string numcc_label = "# of " +  arc_type + "connected components";
+  os.width(50);
+  os << numcc_label << fstinfo.NumCc() << endl;
   string numscc_label = "# of " +  arc_type + "strongly conn components";
-  fprintf(fp, "%-50s%lld\n", numscc_label.c_str(),
-          fstinfo.NumScc());
+  os.width(50);
+  os << numscc_label << fstinfo.NumScc() << endl;
 
-  fprintf(fp, "%-50s%c\n", "input matcher",
-          fstinfo.InputMatchType() == MATCH_INPUT ? 'y' :
-          fstinfo.InputMatchType() == MATCH_NONE ? 'n' : '?');
-  fprintf(fp, "%-50s%c\n", "output matcher",
-          fstinfo.OutputMatchType() == MATCH_OUTPUT ? 'y' :
-          fstinfo.OutputMatchType() == MATCH_NONE ? 'n' : '?');
-  fprintf(fp, "%-50s%c\n", "input lookahead",
-          fstinfo.InputLookAhead() ? 'y' : 'n');
-  fprintf(fp, "%-50s%c\n", "output lookahead",
-          fstinfo.OutputLookAhead() ? 'y' : 'n');
+  os.width(50);
+  os << "input matcher"
+     << (fstinfo.InputMatchType() == MATCH_INPUT ? 'y' :
+         fstinfo.InputMatchType() == MATCH_NONE ? 'n' : '?') << endl;
+  os.width(50);
+  os << "output matcher"
+     << (fstinfo.OutputMatchType() == MATCH_OUTPUT ? 'y' :
+         fstinfo.OutputMatchType() == MATCH_NONE ? 'n' : '?') << endl;
+  os.width(50);
+  os << "input lookahead"
+     << (fstinfo.InputLookAhead() ? 'y' : 'n') << endl;
+  os.width(50);
+  os << "output lookahead"
+     << (fstinfo.OutputLookAhead() ? 'y' : 'n') << endl;
 
   uint64 prop = 1;
   for (int i = 0; i < 64; ++i, prop <<= 1) {
     if (prop & kBinaryProperties) {
       char value = 'n';
       if (fstinfo.Properties() & prop) value = 'y';
-      fprintf(fp, "%-50s%c\n", PropertyNames[i], value);
+      os.width(50);
+      os << PropertyNames[i] << value << endl;
     } else if (prop & kPosTrinaryProperties) {
       char value = '?';
       if (fstinfo.Properties() & prop) value = 'y';
       else if (fstinfo.Properties() & prop << 1) value = 'n';
-      fprintf(fp, "%-50s%c\n", PropertyNames[i], value);
+      os.width(50);
+      os << PropertyNames[i] << value << endl;
     }
   }
+  os.setf(old);
 }
 
 }  // namespace fst

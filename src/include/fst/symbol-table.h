@@ -29,9 +29,12 @@ using std::pair; using std::make_pair;
 #include <vector>
 using std::vector;
 
+
 #include <fst/compat.h>
 #include <iostream>
 #include <fstream>
+#include <sstream>
+
 
 #include <map>
 
@@ -112,14 +115,14 @@ class SymbolTableImpl {
 
   //
   // Return the key associated with the symbol. If the symbol
-  // does not exists, return -1.
+  // does not exists, return SymbolTable::kNoSymbol.
   int64 Find(const string& symbol) const {
     return Find(symbol.c_str());
   }
 
   //
   // Return the key associated with the symbol. If the symbol
-  // does not exists, return -1.
+  // does not exists, return SymbolTable::kNoSymbol.
   int64 Find(const char* symbol) const {
     map<const char *, int64, StrCmp>::const_iterator it =
         symbol_map_.find(symbol);
@@ -315,7 +318,8 @@ class SymbolTable {
 
   // Return the label-agnostic MD5 check-sum for this table.  All new symbols
   // added to the table will result in an updated checksum.
-  virtual string CheckSum() const ATTRIBUTE_DEPRECATED {
+  // DEPRECATED.
+  virtual string CheckSum() const {
     return impl_->CheckSum();
   }
 
@@ -357,13 +361,13 @@ class SymbolTable {
   }
 
   // Return the key associated with the symbol. If the symbol
-  // does not exists, log error and  return -1
+  // does not exists, log error and  return SymbolTable::kNoSymbol
   virtual int64 Find(const string& symbol) const {
     return impl_->Find(symbol);
   }
 
   // Return the key associated with the symbol. If the symbol
-  // does not exists, log error and  return -1
+  // does not exists, log error and  return SymbolTable::kNoSymbol
   virtual int64 Find(const char* symbol) const {
     return impl_->Find(symbol);
   }
@@ -448,8 +452,8 @@ class SymbolTableIterator {
 
  private:
   const SymbolTable& table_;
-  size_t pos_;
-  ssize_t nsymbols_;
+  ssize_t pos_;
+  size_t nsymbols_;
   int64 key_;
 };
 
@@ -498,6 +502,20 @@ SymbolTable *RelabelSymbolTable(const SymbolTable *table,
 
   return new_table;
 }
+
+// Symbol Table Serialization
+inline void SymbolTableToString(const SymbolTable *table, string *result) {
+  ostringstream ostrm;
+  table->Write(ostrm);
+  *result = ostrm.str();
+}
+
+inline SymbolTable *StringToSymbolTable(const string &s) {
+  istringstream istrm(s);
+  return SymbolTable::Read(istrm, SymbolTableReadOptions());
+}
+
+
 
 }  // namespace fst
 

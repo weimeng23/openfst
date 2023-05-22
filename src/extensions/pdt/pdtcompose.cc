@@ -49,6 +49,7 @@ int main(int argc, char **argv) {
 
   string in1_name = strcmp(argv[1], "-") == 0 ? "" : argv[1];
   string in2_name = strcmp(argv[2], "-") == 0 ? "" : argv[2];
+  string out_name = argc > 3 ? argv[3] : "";
 
   if (in1_name.empty() && in2_name.empty()) {
     LOG(ERROR) << argv[0] << ": Can't take both inputs from standard input.";
@@ -60,8 +61,10 @@ int main(int argc, char **argv) {
   s::FstClass *ifst2 = s::FstClass::Read(in2_name);
   if (!ifst2) return 1;
 
-  if (FLAGS_pdt_parentheses.empty())
+  if (FLAGS_pdt_parentheses.empty()) {
     LOG(ERROR) << argv[0] << ": No PDT parenthesis label pairs provided";
+    return 1;
+  }
 
   vector<pair<int64, int64> > parens;
   fst::ReadLabelPairs(FLAGS_pdt_parentheses, &parens, false);
@@ -73,7 +76,7 @@ int main(int argc, char **argv) {
 
   if (FLAGS_connect)
     s::Connect(&ofst);
-  ofst.Write(argc > 3 ? argv[3] : "");
+  ofst.Write(out_name);
 
   return 0;
 }

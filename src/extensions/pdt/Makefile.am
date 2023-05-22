@@ -1,22 +1,29 @@
 AM_CPPFLAGS = -I$(srcdir)/../../include $(ICU_CPPFLAGS)
-AM_LDFLAGS = -lm -ldl
 
-bin_PROGRAMS = pdtcompose pdtexpand pdtreplace
+if HAVE_BIN
+bin_PROGRAMS = pdtcompose pdtexpand pdtinfo pdtreplace pdtreverse \
+               pdtshortestpath
 
-pdtbindeps = ../../lib/libfst.la ../../script/libfstscript.la \
-     libfstpdt.la
+LDADD = libfstpdtscript.la ../../script/libfstscript.la \
+	../../lib/libfst.la -lm -ldl
 
 pdtcompose_SOURCES = pdtcompose.cc
-pdtcompose_LDADD = $(pdtbindeps)
 
 pdtexpand_SOURCES = pdtexpand.cc
-pdtexpand_LDADD = $(pdtbindeps)
+
+pdtinfo_SOURCES = pdtinfo.cc
 
 pdtreplace_SOURCES = pdtreplace.cc
-pdtreplace_LDADD = $(pdtbindeps)
 
+pdtreverse_SOURCES = pdtreverse.cc 
+
+pdtshortestpath_SOURCES = pdtshortestpath.cc 
+endif
 
 libfstdir = @libfstdir@
-libfst_LTLIBRARIES = libfstpdt.la
-libfstpdt_la_SOURCES = pdtscript.cc
-libfstpdt_la_LDFLAGS = -version-info 0:0:0
+
+if HAVE_SCRIPT
+libfst_LTLIBRARIES = libfstpdtscript.la
+libfstpdtscript_la_SOURCES = pdtscript.cc
+libfstpdtscript_la_LDFLAGS = -version-info 0:0:0
+endif

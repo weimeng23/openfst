@@ -26,13 +26,14 @@
 #include <fst/script/fst-class.h>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 int main(int argc, char **argv) {
   using fst::script::FstClass;
   using fst::script::VectorFstClass;
   using fst::script::Reverse;
 
-  string usage = "Reverse the paths in an FST.\n\n  Usage: ";
+  string usage = "Reverses the paths in an FST.\n\n  Usage: ";
   usage += argv[0];
   usage += " [in.fst [out.fst]]\n";
 
@@ -47,6 +48,8 @@ int main(int argc, char **argv) {
   string out_name = argc > 2 ? argv[2] : "";
 
   FstClass *ifst = FstClass::Read(in_name);
+  if (!ifst) return 1;
+
   VectorFstClass *out = new VectorFstClass(ifst->ArcType());
 
   Reverse(*ifst, out);

@@ -29,9 +29,8 @@ int main(int argc, char **argv) {
   namespace s = fst::script;
   using fst::script::FstClass;
   using fst::script::MutableFstClass;
-  using fst::script::VectorFstClass;
 
-  string usage = "Reweight an FST.\n\n  Usage: ";
+  string usage = "Reweights an FST.\n\n  Usage: ";
   usage += argv[0];
   usage += " in.fst potential.txt [out.fst]\n";
 
@@ -46,26 +45,19 @@ int main(int argc, char **argv) {
   string potentials_fname = argv[2];
   string out_fname = argc > 3 ? argv[3] : "";
 
-  FstClass *ifst = FstClass::Read(in_fname);
-  if (!ifst) return 1;
-
-  MutableFstClass *ofst = 0;
-  if (ifst->Properties(fst::kMutable, false)) {
-    ofst = static_cast<MutableFstClass *>(ifst);
-  } else {
-    ofst = new VectorFstClass(*ifst);
-    delete ifst;
-  }
+  MutableFstClass *fst = MutableFstClass::Read(in_fname, true);
+  if (!fst) return 1;
 
   vector<s::WeightClass> potential;
-  s::ReadPotentials(ifst->WeightType(), potentials_fname, &potential);
+  if (!s::ReadPotentials(fst->WeightType(), potentials_fname, &potential))
+    return 1;
 
   fst::ReweightType reweight_type = FLAGS_to_final ?
       fst::REWEIGHT_TO_FINAL :
       fst::REWEIGHT_TO_INITIAL;
 
-  s::Reweight(ofst, potential, reweight_type);
-  ofst->Write(out_fname);
+  s::Reweight(fst, potential, reweight_type);
+  fst->Write(out_fname);
 
   return 0;
 }
