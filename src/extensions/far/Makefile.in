@@ -358,6 +358,7 @@ EGREP = @EGREP@
 ETAGS = @ETAGS@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
+FILECMD = @FILECMD@
 GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -470,12 +471,12 @@ EXTRA_DIST = build_defs.bzl
 @HAVE_SCRIPT_FALSE@lib_LTLIBRARIES = libfstfar.la
 @HAVE_SCRIPT_TRUE@lib_LTLIBRARIES = libfstfar.la libfstfarscript.la
 libfstfar_la_SOURCES = sttable.cc stlist.cc
-libfstfar_la_LDFLAGS = -version-info 25:0:0
+libfstfar_la_LDFLAGS = -version-info 26:0:0
 libfstfar_la_LIBADD = ../../lib/libfst.la -lm $(DL_LIBS)
 @HAVE_SCRIPT_TRUE@libfstfarscript_la_SOURCES = compile-strings.cc far-class.cc farscript.cc \
 @HAVE_SCRIPT_TRUE@							 getters.cc script-impl.cc sttable.cc stlist.cc
 
-@HAVE_SCRIPT_TRUE@libfstfarscript_la_LDFLAGS = -version-info 25:0:0
+@HAVE_SCRIPT_TRUE@libfstfarscript_la_LDFLAGS = -version-info 26:0:0
 @HAVE_SCRIPT_TRUE@libfstfarscript_la_LIBADD = libfstfar.la ../../script/libfstscript.la \
 @HAVE_SCRIPT_TRUE@        					../../lib/libfst.la -lm $(DL_LIBS)
 
