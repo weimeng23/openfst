@@ -28,13 +28,8 @@
 
 #include <fst/flags.h>
 #include <fst/log.h>
-#include <fst/extensions/linear/linear-fst.h>
-#include <fst/arc.h>
-#include <fst/cache.h>
 #include <fstream>
-#include <fst/float-weight.h>
 #include <fst/script/script-impl.h>
-#include <unordered_map>
 
 DEFINE_string(delimiter, "|",
               "Single non-white-space character delimiter inside sequences of "

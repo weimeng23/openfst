@@ -20,13 +20,14 @@
 #include <fst/symbol-table.h>
 
 #include <algorithm>
+#include <cerrno>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <ios>
 #include <iostream>
 #include <istream>
 #include <memory>
-#include <optional>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -40,6 +41,7 @@
 #include <fst/util.h>
 #include <map>
 #include <functional>
+#include <fst/compat.h>
 #include <string_view>
 #include <fst/lock.h>
 
@@ -140,11 +142,11 @@ void ConstSymbolTableImpl::AddTable(const SymbolTable &table) {
 }
 
 SymbolTableImpl * SymbolTableImpl::ReadText(
-    std::istream &strm, std::string_view name, const std::string &sep) {
+    std::istream &strm, std::string_view name, std::string_view sep) {
   auto impl = std::make_unique<SymbolTableImpl>(name);
   int64_t nline = 0;
   char line[kLineLen];
-  const auto separator = sep + "\n";
+  const std::string separator = fst::StrCat(sep, "\n");
   while (!strm.getline(line, kLineLen).fail()) {
     ++nline;
     const std::vector<std::string_view> col =
@@ -344,7 +346,7 @@ void SymbolTableImpl::ShrinkToFit() { symbols_.ShrinkToFit(); }
 }  // namespace internal
 
 SymbolTable * SymbolTable::ReadText(const std::string &source,
-                                                    const std::string &sep) {
+                                                    std::string_view sep) {
   std::ifstream strm(source, std::ios_base::in);
   if (!strm.good()) {
     LOG(ERROR) << "SymbolTable::ReadText: Can't open file: " << source;
@@ -371,7 +373,7 @@ bool SymbolTable::Write(const std::string &source) const {
   }
 }
 
-bool SymbolTable::WriteText(std::ostream &strm, const std::string &sep) const {
+bool SymbolTable::WriteText(std::ostream &strm, std::string_view sep) const {
   for (const auto &item : *this) {
     std::ostringstream line;
     line << item.Symbol() << sep[0] << item.Label() << '\n';
@@ -381,7 +383,7 @@ bool SymbolTable::WriteText(std::ostream &strm, const std::string &sep) const {
 }
 
 bool SymbolTable::WriteText(const std::string &sink,
-                            const std::string &sep) const {
+                            std::string_view sep) const {
   if (!sink.empty()) {
     std::ofstream strm(sink);
     if (!strm) {

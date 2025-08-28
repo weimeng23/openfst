@@ -83,8 +83,7 @@ class PdtInfo {
 template <class Arc>
 PdtInfo<Arc>::PdtInfo(
     const Fst<Arc> &fst,
-    const std::vector<std::pair<typename Arc::Label, typename Arc::Label>>
-        &parens)
+    const std::vector<std::pair<typename Arc::Label, typename Arc::Label>> &        parens)
     : fst_type_(fst.Type()),
       nstates_(0),
       narcs_(0),

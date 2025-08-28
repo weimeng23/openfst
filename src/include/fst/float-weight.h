@@ -45,9 +45,8 @@
 namespace fst {
 
 namespace internal {
-// TODO(wolfsonkin): Replace with `std::isnan` if and when that ends up
-// constexpr. For context, see
-// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p0533r6.pdf.
+// `std::isnan` is not `constexpr` until C++23.
+// TODO(wolfsonkin): Replace with `std::isnan` when C++23 can be used.
 template <class T>
 inline constexpr bool IsNan(T value) {
   return value != value;

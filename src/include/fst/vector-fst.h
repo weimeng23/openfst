@@ -525,12 +525,14 @@ VectorFstImpl<S> *VectorFstImpl<S>::Read(std::istream &strm,
 // VectorFst is thread-compatible.
 template <class A, class S /* = VectorState<A> */>
 class VectorFst : public ImplToMutableFst<internal::VectorFstImpl<S>> {
+  using Base = ImplToMutableFst<internal::VectorFstImpl<S>>;
+
  public:
   using Arc = A;
   using StateId = typename Arc::StateId;
 
   using State = S;
-  using Impl = internal::VectorFstImpl<State>;
+  using typename Base::Impl;
 
   friend class StateIterator<VectorFst<Arc, State>>;
   friend class ArcIterator<VectorFst<Arc, State>>;
@@ -539,13 +541,12 @@ class VectorFst : public ImplToMutableFst<internal::VectorFstImpl<S>> {
   template <class F, class G>
   friend void Cast(const F &, G *);
 
-  VectorFst() : ImplToMutableFst<Impl>(std::make_shared<Impl>()) {}
+  VectorFst() : Base(std::make_shared<Impl>()) {}
 
-  explicit VectorFst(const Fst<Arc> &fst)
-      : ImplToMutableFst<Impl>(std::make_shared<Impl>(fst)) {}
+  explicit VectorFst(const Fst<Arc> &fst) : Base(std::make_shared<Impl>(fst)) {}
 
   VectorFst(const VectorFst &fst, bool unused_safe = false)
-      : ImplToMutableFst<Impl>(fst.GetSharedImpl()) {}
+      : Base(fst.GetSharedImpl()) {}
 
   VectorFst(VectorFst &&) noexcept;
 
@@ -605,17 +606,16 @@ class VectorFst : public ImplToMutableFst<internal::VectorFstImpl<S>> {
   inline void InitMutableArcIterator(StateId s,
                                      MutableArcIteratorData<Arc> *) override;
 
-  using ImplToMutableFst<Impl, MutableFst<Arc>>::ReserveArcs;
-  using ImplToMutableFst<Impl, MutableFst<Arc>>::ReserveStates;
+  using Base::ReserveArcs;
+  using Base::ReserveStates;
 
  private:
-  using ImplToMutableFst<Impl, MutableFst<Arc>>::GetImpl;
-  using ImplToMutableFst<Impl, MutableFst<Arc>>::GetMutableImpl;
-  using ImplToMutableFst<Impl, MutableFst<Arc>>::MutateCheck;
-  using ImplToMutableFst<Impl, MutableFst<Arc>>::SetImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
+  using Base::MutateCheck;
+  using Base::SetImpl;
 
-  explicit VectorFst(std::shared_ptr<Impl> impl)
-      : ImplToMutableFst<Impl>(impl) {}
+  explicit VectorFst(std::shared_ptr<Impl> impl) : Base(impl) {}
 };
 
 template <class Arc, class State>

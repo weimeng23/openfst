@@ -18,9 +18,7 @@
 #include <cstdint>
 
 #include <fst/arc.h>
-#include <fst/cache.h>
 #include <fst/compact-fst.h>
-#include <fst/float-weight.h>
 #include <fst/register.h>
 
 namespace fst {

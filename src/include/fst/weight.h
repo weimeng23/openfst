@@ -153,7 +153,7 @@ inline constexpr uint64_t kPath = 0x0000000000000010ULL;
 // This is also used for a few other weight generation defaults.
 inline constexpr size_t kNumRandomWeights = 5;
 
-// Weight property boolean constants needed for SFINAE.
+// Weight property boolean constants.
 
 template <class W>
 using IsIdempotent = std::bool_constant<(W::Properties() & kIdempotent) != 0>;

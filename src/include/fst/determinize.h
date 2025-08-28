@@ -871,6 +871,8 @@ class DeterminizeFstImpl : public DeterminizeFstImplBase<Arc> {
 // counting, delegating most methods to ImplToFst.
 template <class A>
 class DeterminizeFst : public ImplToFst<internal::DeterminizeFstImplBase<A>> {
+  using Base = ImplToFst<internal::DeterminizeFstImplBase<A>>;
+
  public:
   using Arc = A;
   using Label = typename Arc::Label;
@@ -879,7 +881,7 @@ class DeterminizeFst : public ImplToFst<internal::DeterminizeFstImplBase<A>> {
 
   using Store = DefaultCacheStore<Arc>;
   using State = typename Store::State;
-  using Impl = internal::DeterminizeFstImplBase<Arc>;
+  using typename Base::Impl;
 
   friend class ArcIterator<DeterminizeFst<Arc>>;
   friend class StateIterator<DeterminizeFst<Arc>>;
@@ -888,8 +890,7 @@ class DeterminizeFst : public ImplToFst<internal::DeterminizeFstImplBase<A>> {
             class StateTable>
   friend class DeterminizeFstImpl;
 
-  explicit DeterminizeFst(const Fst<A> &fst)
-      : ImplToFst<Impl>(CreateImpl(fst)) {}
+  explicit DeterminizeFst(const Fst<A> &fst) : Base(CreateImpl(fst)) {}
 
   template <class CommonDivisor, class Filter, class StateTable>
   explicit DeterminizeFst(
@@ -897,7 +898,7 @@ class DeterminizeFst : public ImplToFst<internal::DeterminizeFstImplBase<A>> {
       const DeterminizeFstOptions<Arc, CommonDivisor, Filter, StateTable>
           &opts =
               DeterminizeFstOptions<Arc, CommonDivisor, Filter, StateTable>())
-      : ImplToFst<Impl>(CreateImpl(fst, opts)) {}
+      : Base(CreateImpl(fst, opts)) {}
 
   // This acceptor-only version additionally computes the distance to final
   // states in the output if provided with those distances for the input; this
@@ -909,10 +910,9 @@ class DeterminizeFst : public ImplToFst<internal::DeterminizeFstImplBase<A>> {
       const DeterminizeFstOptions<Arc, CommonDivisor, Filter, StateTable>
           &opts =
               DeterminizeFstOptions<Arc, CommonDivisor, Filter, StateTable>())
-      : ImplToFst<Impl>(
-            std::make_shared<internal::DeterminizeFsaImpl<Arc, CommonDivisor,
-                                                          Filter, StateTable>>(
-                fst, in_dist, out_dist, opts)) {
+      : Base(std::make_shared<internal::DeterminizeFsaImpl<Arc, CommonDivisor,
+                                                           Filter, StateTable>>(
+            fst, in_dist, out_dist, opts)) {
     if (!fst.Properties(kAcceptor, true)) {
       FSTERROR() << "DeterminizeFst: "
                  << "Distance to final states computed for acceptors only";
@@ -922,8 +922,8 @@ class DeterminizeFst : public ImplToFst<internal::DeterminizeFstImplBase<A>> {
 
   // See Fst<>::Copy() for doc.
   DeterminizeFst(const DeterminizeFst &fst, bool safe = false)
-      : ImplToFst<Impl>(safe ? std::shared_ptr<Impl>(fst.GetImpl()->Copy())
-                             : fst.GetSharedImpl()) {}
+      : Base(safe ? std::shared_ptr<Impl>(fst.GetImpl()->Copy())
+                  : fst.GetSharedImpl()) {}
 
   // Get a copy of this DeterminizeFst. See Fst<>::Copy() for further doc.
   DeterminizeFst *Copy(bool safe = false) const override {
@@ -937,8 +937,8 @@ class DeterminizeFst : public ImplToFst<internal::DeterminizeFstImplBase<A>> {
   }
 
  private:
-  using ImplToFst<Impl>::GetImpl;
-  using ImplToFst<Impl>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 
   static std::shared_ptr<Impl> CreateImpl(const Fst<Arc> &fst) {
     using D = DefaultCommonDivisor<Weight>;

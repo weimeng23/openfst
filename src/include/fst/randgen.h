@@ -271,8 +271,8 @@ class ArcSampler {
 // sized the same as the vector of probabilities.
 // probs.size()).
 template <class Result, class RNG>
-void OneMultinomialSample(const std::vector<double> &probs,
-                          size_t num_to_sample, Result *result, RNG *rng) {
+void OneMultinomialSample(const std::vector<double> &probs, size_t num_to_sample,
+                          Result *result, RNG *rng) {
   using distribution = std::binomial_distribution<size_t>;
   // Left-over probability mass. Keep an array of the partial sums because
   // keeping a scalar and modifying norm -= probs[i] in the loop will result
@@ -580,6 +580,8 @@ class RandGenFstImpl : public CacheImpl<ToArc> {
 template <class FromArc, class ToArc, class Sampler>
 class RandGenFst
     : public ImplToFst<internal::RandGenFstImpl<FromArc, ToArc, Sampler>> {
+  using Base = ImplToFst<internal::RandGenFstImpl<FromArc, ToArc, Sampler>>;
+
  public:
   using Label = typename FromArc::Label;
   using StateId = typename FromArc::StateId;
@@ -588,17 +590,16 @@ class RandGenFst
   using Store = DefaultCacheStore<FromArc>;
   using State = typename Store::State;
 
-  using Impl = internal::RandGenFstImpl<FromArc, ToArc, Sampler>;
+  using typename Base::Impl;
 
   friend class ArcIterator<RandGenFst<FromArc, ToArc, Sampler>>;
   friend class StateIterator<RandGenFst<FromArc, ToArc, Sampler>>;
 
   RandGenFst(const Fst<FromArc> &fst, const RandGenFstOptions<Sampler> &opts)
-      : ImplToFst<Impl>(std::make_shared<Impl>(fst, opts)) {}
+      : Base(std::make_shared<Impl>(fst, opts)) {}
 
   // See Fst<>::Copy() for doc.
-  RandGenFst(const RandGenFst &fst, bool safe = false)
-      : ImplToFst<Impl>(fst, safe) {}
+  RandGenFst(const RandGenFst &fst, bool safe = false) : Base(fst, safe) {}
 
   // Get a copy of this RandGenFst. See Fst<>::Copy() for further doc.
   RandGenFst *Copy(bool safe = false) const override {
@@ -612,8 +613,8 @@ class RandGenFst
   }
 
  private:
-  using ImplToFst<Impl>::GetImpl;
-  using ImplToFst<Impl>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 
   RandGenFst &operator=(const RandGenFst &) = delete;
 };

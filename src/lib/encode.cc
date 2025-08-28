@@ -27,6 +27,7 @@
 
 #include <fst/log.h>
 #include <fst/util.h>
+#include <string_view>
 
 namespace fst {
 

@@ -18,10 +18,8 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cstddef>
 #include <string>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 namespace fst {
@@ -94,7 +92,9 @@ internal::StringSplitter StrSplit(std::string_view full, char delim,
 }
 
 namespace {
+
 bool IsAsciiSpace(unsigned char ch) { return std::isspace(ch); }
+
 }  // namespace
 
 std::string_view StripTrailingAsciiWhitespace(std::string_view full) {

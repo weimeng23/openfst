@@ -31,9 +31,6 @@
 
 #include <fst/extensions/pdt/compose.h>
 #include <fst/extensions/pdt/replace.h>
-#include <fst/arc.h>
-#include <fst/cache.h>
-#include <fst/float-weight.h>
 #include <fst/script/fst-class.h>
 #include <fst/script/script-impl.h>
 #include <fst/script/weight-class.h>

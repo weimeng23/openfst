@@ -24,21 +24,17 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <ios>
 #include <iostream>
 #include <istream>
 #include <iterator>
 #include <memory>
 #include <ostream>
-#include <sstream>
 #include <string>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
 #include <fst/compat.h>
-#include <fst/flags.h>
 #include <fst/log.h>
 #include <fstream>
 #include <fst/windows_defs.inc>
@@ -215,7 +211,7 @@ class SymbolTableImpl final : public MutableSymbolTableImpl {
       // `SymbolTable` file, encoded as a string. Each byte in the string is
       // considered a valid separator. Multi-byte separators are not permitted.
       // The default value, "\t ", accepts space and tab.
-      const std::string &sep = FST_FLAGS_fst_field_separator);
+      std::string_view sep = FST_FLAGS_fst_field_separator);
 
   // Reads a binary SymbolTable from stream, using source in error messages.
   static SymbolTableImpl * Read(std::istream &strm,
@@ -228,7 +224,7 @@ class SymbolTableImpl final : public MutableSymbolTableImpl {
   std::string Find(int64_t key) const override;
 
   // Returns the key associated with the symbol; if the symbol
-  // does not exists, returns kNoSymbol.
+  // does not exist, returns kNoSymbol.
   int64_t Find(std::string_view symbol) const override {
     int64_t idx = symbols_.Find(symbol);
     if (idx == kNoSymbol || idx < dense_key_limit_) return idx;
@@ -380,7 +376,7 @@ class SymbolTable {
   // name to give the resulting SymbolTable.
   static SymbolTable *ReadText(
       std::istream &strm, std::string_view name,
-      const std::string &sep = FST_FLAGS_fst_field_separator) {
+      std::string_view sep = FST_FLAGS_fst_field_separator) {
     auto impl =
         fst::WrapUnique(internal::SymbolTableImpl::ReadText(strm, name, sep));
     return impl ? new SymbolTable(std::move(impl)) : nullptr;
@@ -389,7 +385,7 @@ class SymbolTable {
   // Reads a text representation of the symbol table.
   static SymbolTable * ReadText(
       const std::string &source,
-      const std::string &sep = FST_FLAGS_fst_field_separator);
+      std::string_view sep = FST_FLAGS_fst_field_separator);
 
   // Reads a binary dump of the symbol table from a stream.
   static SymbolTable *Read(std::istream &strm, std::string_view source) {
@@ -484,18 +480,11 @@ class SymbolTable {
 
   bool Write(const std::string &source) const;
 
-  // Dumps a text representation of the symbol table via a stream.
-  bool WriteText(
-      std::ostream &strm,
-      // Characters to be used as a separator between fields in a textual
-      // `SymbolTable` file, encoded as a string. Each byte in the string is
-      // considered a valid separator. Multi-byte separators are not permitted.
-      // The default value, "\t ", outputs tab.
-      const std::string &sep = FST_FLAGS_fst_field_separator) const;
+  bool WriteText(std::ostream &strm,
+                 std::string_view sep = FST_FLAGS_fst_field_separator) const;
 
-  // Dumps a text representation of the symbol table.
   bool WriteText(const std::string &sink,
-                 const std::string &sep = FST_FLAGS_fst_field_separator) const;
+                 std::string_view sep = FST_FLAGS_fst_field_separator) const;
 
   const_iterator begin() const { return const_iterator(*this, 0); }
 
@@ -522,7 +511,7 @@ class SymbolTable {
 
  private:
   void MutateCheck() {
-    if (impl_.unique() || !impl_->IsMutable()) return;
+    if (impl_.use_count() == 1 || !impl_->IsMutable()) return;
     std::unique_ptr<internal::SymbolTableImplBase> copy = impl_->Copy();
     CHECK(copy != nullptr);
     impl_ = std::move(copy);

@@ -584,7 +584,7 @@ class EditFstImpl : public FstImpl<A> {
   // of the wrapped FST via a MutableArcIterator, or adding a new state via
   // AddState().
   void MutateCheck() {
-    if (!data_.unique()) {
+    if (data_.use_count() > 1) {
       data_ =
           std::make_shared<EditFstData<Arc, WrappedFstT, MutableFstT>>(*data_);
     }
@@ -639,25 +639,26 @@ template <typename A, typename WrappedFstT = ExpandedFst<A>,
           typename MutableFstT = VectorFst<A>>
 class EditFst : public ImplToMutableFst<
                     internal::EditFstImpl<A, WrappedFstT, MutableFstT>> {
+  using Base =
+      ImplToMutableFst<internal::EditFstImpl<A, WrappedFstT, MutableFstT>>;
+
  public:
   using Arc = A;
   using StateId = typename Arc::StateId;
 
-  using Impl = internal::EditFstImpl<Arc, WrappedFstT, MutableFstT>;
+  using typename Base::Impl;
 
   friend class MutableArcIterator<EditFst<Arc, WrappedFstT, MutableFstT>>;
 
-  EditFst() : ImplToMutableFst<Impl>(std::make_shared<Impl>()) {}
+  EditFst() : Base(std::make_shared<Impl>()) {}
 
-  explicit EditFst(const Fst<Arc> &fst)
-      : ImplToMutableFst<Impl>(std::make_shared<Impl>(fst)) {}
+  explicit EditFst(const Fst<Arc> &fst) : Base(std::make_shared<Impl>(fst)) {}
 
   explicit EditFst(const WrappedFstT &fst)
-      : ImplToMutableFst<Impl>(std::make_shared<Impl>(fst)) {}
+      : Base(std::make_shared<Impl>(fst)) {}
 
   // See Fst<>::Copy() for doc.
-  EditFst(const EditFst &fst, bool safe = false)
-      : ImplToMutableFst<Impl>(fst, safe) {}
+  EditFst(const EditFst &fst, bool safe = false) : Base(fst, safe) {}
 
   ~EditFst() override = default;
 
@@ -685,7 +686,7 @@ class EditFst : public ImplToMutableFst<
   // Reads an EditFst from a file, returning nullptr on error. If the source
   // argument is an empty string, it reads from standard input.
   static EditFst *Read(std::string_view source) {
-    auto *impl = ImplToExpandedFst<Impl, MutableFst<Arc>>::Read(source);
+    auto *impl = Base::Read(source);
     return impl ? new EditFst(std::shared_ptr<Impl>(impl)) : nullptr;
   }
 
@@ -711,11 +712,11 @@ class EditFst : public ImplToMutableFst<
   }
 
  private:
-  explicit EditFst(std::shared_ptr<Impl> impl) : ImplToMutableFst<Impl>(impl) {}
+  explicit EditFst(std::shared_ptr<Impl> impl) : Base(impl) {}
 
-  using ImplToFst<Impl, MutableFst<Arc>>::GetImpl;
-  using ImplToFst<Impl, MutableFst<Arc>>::GetMutableImpl;
-  using ImplToFst<Impl, MutableFst<Arc>>::SetImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
+  using Base::SetImpl;
 };
 
 }  // namespace fst

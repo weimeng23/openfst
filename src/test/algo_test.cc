@@ -30,7 +30,7 @@
 #include <fst/lexicographic-weight.h>
 #include <fst/power-weight.h>
 #include <fst/string-weight.h>
-#include <fst/tuple-weight.h>
+#include <fst/test-properties.h>
 #include <fst/weight.h>
 
 // DEFINEs determine which semirings are tested; these are controlled by

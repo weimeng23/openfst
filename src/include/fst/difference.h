@@ -67,17 +67,20 @@ struct DifferenceFstOptions
 // Caveats: same as ComposeFst.
 template <class A>
 class DifferenceFst : public ComposeFst<A> {
+  using Base = ComposeFst<A>;
+
  public:
   using Arc = A;
   using Weight = typename Arc::Weight;
   using StateId = typename Arc::StateId;
+  using typename Base::Impl;
 
-  using ComposeFst<Arc>::CreateBase1;
+  using Base::CreateBase1;
 
   // A - B = A ^ B'.
   DifferenceFst(const Fst<Arc> &fst1, const Fst<Arc> &fst2,
                 const CacheOptions &opts = CacheOptions())
-      : ComposeFst<Arc>(CreateDifferenceImplWithCacheOpts(fst1, fst2, opts)) {
+      : Base(CreateDifferenceImplWithCacheOpts(fst1, fst2, opts)) {
     if (!fst1.Properties(kAcceptor, true)) {
       FSTERROR() << "DifferenceFst: 1st argument not an acceptor";
       GetImpl()->SetProperties(kError, kError);
@@ -88,8 +91,7 @@ class DifferenceFst : public ComposeFst<A> {
   DifferenceFst(
       const Fst<Arc> &fst1, const Fst<Arc> &fst2,
       const DifferenceFstOptions<Arc, Matcher, Filter, StateTable> &opts)
-      : ComposeFst<Arc>(
-            CreateDifferenceImplWithDifferenceOpts(fst1, fst2, opts)) {
+      : Base(CreateDifferenceImplWithDifferenceOpts(fst1, fst2, opts)) {
     if (!fst1.Properties(kAcceptor, true)) {
       FSTERROR() << "DifferenceFst: 1st argument not an acceptor";
       GetImpl()->SetProperties(kError, kError);
@@ -98,7 +100,7 @@ class DifferenceFst : public ComposeFst<A> {
 
   // See Fst<>::Copy() for doc.
   DifferenceFst(const DifferenceFst &fst, bool safe = false)
-      : ComposeFst<Arc>(fst, safe) {}
+      : Base(fst, safe) {}
 
   // Get a copy of this DifferenceFst. See Fst<>::Copy() for further doc.
   DifferenceFst *Copy(bool safe = false) const override {
@@ -106,8 +108,7 @@ class DifferenceFst : public ComposeFst<A> {
   }
 
  private:
-  using Impl = internal::ComposeFstImplBase<Arc>;
-  using ImplToFst<Impl>::GetImpl;
+  using Base::GetImpl;
 
   static std::shared_ptr<Impl> CreateDifferenceImplWithCacheOpts(
       const Fst<Arc> &fst1, const Fst<Arc> &fst2, const CacheOptions &opts) {

@@ -372,8 +372,8 @@ void PdtParser<Arc>::AddParensToFst(
 }
 
 template <class Arc>
-void PdtParser<Arc>::AddParensToSymbolTables(
-    const std::vector<LabelPair> &parens, MutableFst<Arc> *ofst) {
+void PdtParser<Arc>::AddParensToSymbolTables(const std::vector<LabelPair> &parens,
+                                             MutableFst<Arc> *ofst) {
   auto size = parens.size();
   if (ofst->InputSymbols()) {
     if (!AddAuxiliarySymbols(left_paren_prefix_, start_paren_labels_, size,

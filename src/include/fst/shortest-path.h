@@ -187,15 +187,15 @@ bool SingleShortestPath(
   auto f_distance = Weight::Zero();
   distance->clear();
   state_queue->Clear();
-  while (distance->size() < source) {
-    distance->push_back(Weight::Zero());
-    enqueued.push_back(false);
-    parent->emplace_back(kNoStateId, kNoArc);
+  if (distance->size() < source) {
+    distance->resize(source, Weight::Zero());
+    enqueued.resize(source, false);
+    parent->resize(source, std::make_pair(kNoStateId, kNoArc));
   }
   distance->push_back(Weight::One());
+  enqueued.push_back(true);
   parent->emplace_back(kNoStateId, kNoArc);
   state_queue->Enqueue(source);
-  enqueued.push_back(true);
   while (!state_queue->Empty()) {
     const auto s = state_queue->Head();
     state_queue->Dequeue();
@@ -208,8 +208,8 @@ bool SingleShortestPath(
         FirstPath(*state_queue)(s, sd, f_distance)) {
       break;
     }
-    if (ifst.Final(s) != Weight::Zero()) {
-      const auto plus = Plus(f_distance, Times(sd, ifst.Final(s)));
+    if (const auto final = ifst.Final(s); final != Weight::Zero()) {
+      const auto plus = Plus(f_distance, Times(sd, final));
       if (f_distance != plus) {
         f_distance = plus;
         *f_parent = s;
@@ -219,15 +219,15 @@ bool SingleShortestPath(
     }
     for (ArcIterator<Fst<Arc>> aiter(ifst, s); !aiter.Done(); aiter.Next()) {
       const auto &arc = aiter.Value();
-      while (distance->size() <= arc.nextstate) {
-        distance->push_back(Weight::Zero());
-        enqueued.push_back(false);
-        parent->emplace_back(kNoStateId, kNoArc);
+      if (distance->size() <= arc.nextstate) {
+        distance->resize(arc.nextstate + 1, Weight::Zero());
+        enqueued.resize(arc.nextstate + 1, false);
+        parent->resize(arc.nextstate + 1, std::make_pair(kNoStateId, kNoArc));
       }
       auto &nd = (*distance)[arc.nextstate];
       const auto weight = Times(sd, arc.weight);
-      if (nd != Plus(nd, weight)) {
-        nd = Plus(nd, weight);
+      if (const auto plus = Plus(nd, weight); nd != plus) {
+        nd = plus;
         if (!nd.Member()) return false;
         (*parent)[arc.nextstate] = std::make_pair(s, aiter.Position());
         if (!enqueued[arc.nextstate]) {

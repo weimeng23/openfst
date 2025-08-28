@@ -31,7 +31,6 @@
 #include <fst/extensions/mpdt/read_write_utils.h>
 #include <fst/extensions/pdt/compose.h>
 #include <fst/extensions/pdt/getters.h>
-#include <fst/script/arg-packs.h>
 #include <fst/script/fst-class.h>
 
 DECLARE_string(mpdt_parentheses);

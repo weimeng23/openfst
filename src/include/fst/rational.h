@@ -271,11 +271,13 @@ class RationalFstImpl : public FstImpl<A> {
 // reference counting, delegating most methods to ImplToFst.
 template <class A>
 class RationalFst : public ImplToFst<internal::RationalFstImpl<A>> {
+  using Base = ImplToFst<internal::RationalFstImpl<A>>;
+
  public:
   using Arc = A;
   using StateId = typename Arc::StateId;
 
-  using Impl = internal::RationalFstImpl<Arc>;
+  using typename Base::Impl;
 
   friend class StateIterator<RationalFst<Arc>>;
   friend class ArcIterator<RationalFst<Arc>>;
@@ -293,14 +295,13 @@ class RationalFst : public ImplToFst<internal::RationalFstImpl<A>> {
   }
 
  protected:
-  using ImplToFst<Impl>::GetImpl;
+  using Base::GetImpl;
 
   explicit RationalFst(const RationalFstOptions &opts = RationalFstOptions())
-      : ImplToFst<Impl>(std::make_shared<Impl>(opts)) {}
+      : Base(std::make_shared<Impl>(opts)) {}
 
   // See Fst<>::Copy() for doc.
-  RationalFst(const RationalFst &fst, bool safe = false)
-      : ImplToFst<Impl>(fst, safe) {}
+  RationalFst(const RationalFst &fst, bool safe = false) : Base(fst, safe) {}
 
  private:
   RationalFst &operator=(const RationalFst &) = delete;

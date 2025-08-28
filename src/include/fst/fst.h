@@ -82,13 +82,12 @@ struct FstReadOptions {
   bool read_osymbols;           // Read osymbols, if any (default: true).
 
   explicit FstReadOptions(
-      const std::string_view source = "<unspecified>",
+      std::string_view source = "<unspecified>",
       const FstHeader * header = nullptr,
       const SymbolTable * isymbols = nullptr,
       const SymbolTable * osymbols = nullptr);
 
-  explicit FstReadOptions(const std::string_view source,
-                          const SymbolTable *isymbols,
+  explicit FstReadOptions(std::string_view source, const SymbolTable *isymbols,
                           const SymbolTable *osymbols = nullptr);
 
   // Helper function to convert strings FileReadModes into their enum value.
@@ -275,9 +274,9 @@ class Fst {
 
   // Reads an FST from a file; returns nullptr on error. An empty source
   // results in reading from standard input.
-  static Fst *Read(const std::string &source) {
+  static Fst *Read(std::string_view source) {
     if (!source.empty()) {
-      std::ifstream strm(source,
+      std::ifstream strm(std::string(source),
                               std::ios_base::in | std::ios_base::binary);
       if (!strm) {
         LOG(ERROR) << "Fst::Read: Can't open file: " << source;
@@ -687,8 +686,10 @@ class FstImpl {
     properties_.store(impl.properties_.load(std::memory_order_relaxed),
                       std::memory_order_relaxed);
     type_ = impl.type_;
-    isymbols_ = impl.isymbols_ ? impl.isymbols_->Copy() : nullptr;
-    osymbols_ = impl.osymbols_ ? impl.osymbols_->Copy() : nullptr;
+    isymbols_ =
+        fst::WrapUnique(impl.isymbols_ ? impl.isymbols_->Copy() : nullptr);
+    osymbols_ =
+        fst::WrapUnique(impl.osymbols_ ? impl.osymbols_->Copy() : nullptr);
     return *this;
   }
 

@@ -505,26 +505,27 @@ class RmEpsilonFstImpl : public CacheImpl<Arc> {
 // reference counting, delegating most methods to ImplToFst.
 template <class A>
 class RmEpsilonFst : public ImplToFst<internal::RmEpsilonFstImpl<A>> {
+  using Base = ImplToFst<internal::RmEpsilonFstImpl<A>>;
+
  public:
   using Arc = A;
   using StateId = typename Arc::StateId;
 
   using Store = DefaultCacheStore<Arc>;
   using State = typename Store::State;
-  using Impl = internal::RmEpsilonFstImpl<Arc>;
+  using typename Base::Impl;
 
   friend class ArcIterator<RmEpsilonFst<Arc>>;
   friend class StateIterator<RmEpsilonFst<Arc>>;
 
   explicit RmEpsilonFst(const Fst<Arc> &fst)
-      : ImplToFst<Impl>(std::make_shared<Impl>(fst, RmEpsilonFstOptions())) {}
+      : Base(std::make_shared<Impl>(fst, RmEpsilonFstOptions())) {}
 
   RmEpsilonFst(const Fst<A> &fst, const RmEpsilonFstOptions &opts)
-      : ImplToFst<Impl>(std::make_shared<Impl>(fst, opts)) {}
+      : Base(std::make_shared<Impl>(fst, opts)) {}
 
   // See Fst<>::Copy() for doc.
-  RmEpsilonFst(const RmEpsilonFst &fst, bool safe = false)
-      : ImplToFst<Impl>(fst, safe) {}
+  RmEpsilonFst(const RmEpsilonFst &fst, bool safe = false) : Base(fst, safe) {}
 
   // Get a copy of this RmEpsilonFst. See Fst<>::Copy() for further doc.
   RmEpsilonFst *Copy(bool safe = false) const override {
@@ -538,8 +539,8 @@ class RmEpsilonFst : public ImplToFst<internal::RmEpsilonFstImpl<A>> {
   }
 
  private:
-  using ImplToFst<Impl>::GetImpl;
-  using ImplToFst<Impl>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 
   RmEpsilonFst &operator=(const RmEpsilonFst &) = delete;
 };

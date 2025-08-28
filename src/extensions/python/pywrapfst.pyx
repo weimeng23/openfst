@@ -51,7 +51,7 @@ normal `k` prefix.
 # * _SymbolTableIterator
 # * EncodeMapper
 # * Fst, MutableFst, and VectorFst
-# * FST properties
+# * Properties and flags
 # * Arc
 # * _ArcIterator and _MutableArcIterator
 # * _StateIterator
@@ -86,6 +86,7 @@ from libcpp cimport bool
 from libcpp.cast cimport static_cast
 from libcpp.limits cimport numeric_limits
 from libcpp.memory cimport static_pointer_cast
+from libcpp.optional cimport optional
 from libcpp.utility cimport move
 
 # Missing C++ imports.
@@ -93,7 +94,7 @@ from cios cimport ofstream
 from cmemory cimport WrapUnique
 
 # Python imports.
-from absl import logging
+import logging
 import enum
 import numbers
 import os
@@ -481,6 +482,37 @@ cdef class Weight:
     FstBadWeightError: Invalid weight.
   """
 
+  cdef void _check_weight(self) except *:
+    if self.type() == b"none":
+      raise FstArgError("Weight type not found")
+    if not self.member():
+      raise FstBadWeightError("Invalid weight")
+
+  def __init__(self, weight_type, weight):
+    self._weight.reset(new fst.WeightClass(tostring(weight_type),
+                                           weight_tostring(weight)))
+    self._check_weight()
+
+  cpdef Weight copy(self):
+    """
+    copy(self)
+
+    Returns a copy of the Weight.
+    """
+    cdef Weight _weight = Weight.__new__(Weight)
+    _weight._weight.reset(new fst.WeightClass(deref(self._weight)))
+    return _weight
+
+  cpdef string type(self):
+    """type(self)
+
+    Returns a string indicating the weight type.
+    """
+    return self._weight.get().Type()
+
+  cpdef string to_string(self):
+    return self._weight.get().ToString()
+
   def __repr__(self):
     return f"<{self.type()} Weight {self.to_string()} at 0x{id(self):x}>"
 
@@ -493,26 +525,24 @@ cdef class Weight:
   def __float__(self):
     return float(self.to_string())
 
-  def __init__(self, weight_type, weight):
-    self._weight.reset(new fst.WeightClass(tostring(weight_type),
-                                           weight_tostring(weight)))
-    self._check_weight()
+  cpdef bool member(self):
+    return self._weight.get().Member()
 
-  cdef void _check_weight(self) except *:
-    if self.type() == b"none":
-      raise FstArgError("Weight type not found")
-    if not self.member():
-      raise FstBadWeightError("Invalid weight")
+  def properties(self):
+    """properties(self)
 
-  cpdef Weight copy(self):
+    Returns the weight's properties.
+
+    Returns:
+      A bitmask.
     """
-    copy(self)
+    return WeightProperties(self._weight.get().Properties())
 
-    Returns a copy of the Weight.
-    """
-    cdef Weight _weight = Weight.__new__(Weight)
-    _weight._weight.reset(new fst.WeightClass(deref(self._weight)))
-    return _weight
+  def __eq__(Weight w1, Weight w2):
+    return fst.Eq(deref(w1._weight), deref(w2._weight))
+
+  def __ne__(Weight w1, Weight w2):
+    return not w1 == w2
 
   # To get around the inability to declare cdef class methods, we define the
   # C++ part out-of-class and then call it from within.
@@ -543,25 +573,6 @@ cdef class Weight:
     Constructs a non-member weight in the semiring.
     """
     return _no_weight(weight_type)
-
-  def __eq__(Weight w1, Weight w2):
-    return fst.Eq(deref(w1._weight), deref(w2._weight))
-
-  def __ne__(Weight w1, Weight w2):
-    return not w1 == w2
-
-  cpdef string to_string(self):
-    return self._weight.get().ToString()
-
-  cpdef string type(self):
-    """type(self)
-
-    Returns a string indicating the weight type.
-    """
-    return self._weight.get().Type()
-
-  cpdef bool member(self):
-    return self._weight.get().Member()
 
 
 cdef Weight _plus(Weight lhs, Weight rhs):
@@ -1193,7 +1204,8 @@ cdef class SymbolTable(_MutableSymbolTable):
       A new SymbolTable instance.
     """
     cdef unique_ptr[fst.SymbolTable] _symbols
-    _symbols.reset(fst.SymbolTable.ReadText(path_tostring(source), tostring(sep)))
+    _symbols.reset(fst.SymbolTable.ReadText(path_tostring(source),
+                                            tostring(sep)))
     if _symbols.get() == NULL:
       raise FstIOError(f"Read failed: {source!r}")
     return _init_SymbolTable(move(_symbols))
@@ -1430,29 +1442,25 @@ cdef class EncodeMapper:
     """
     return self._mapper.get().WeightType()
 
-  cpdef uint8_t flags(self):
+  def flags(self):
     """
     flags(self)
 
     Returns the mapper's flags.
-    """
-    return self._mapper.get().Flags()
-
-  def properties(self, mask):
-    """
-    properties(self, mask)
-
-    Provides property bits.
-
-    This method provides user access to the properties of the mapper.
-
-    Args:
-      mask: The property mask to be compared to the mapper's properties.
 
     Returns:
-      A 64-bit bitmask representing the requested properties.
+      A bitmask.
     """
+    return EncodeMapperFlags(self._mapper.get().Flags())
 
+  def properties(self, mask):
+    """properties(self, mask)
+
+    Returns the mapper's properties.
+
+    Returns:
+      A bitmask.
+    """
     return FstProperties(self._mapper.get().Properties(mask.value))
 
   @classmethod
@@ -1839,6 +1847,15 @@ cdef class Fst:
       return
     return _init_FstSymbolTableView(self._fst, input_side=True)
 
+  def num_states_if_known(self):
+    """
+    num_states_if_known(self)
+
+    Returns the number of states if known, or None otherwise.
+    """
+    cdef optional[int64_t] result = self._fst.get().NumStatesIfKnown()
+    return result.value() if result.has_value() else None
+
   cpdef size_t num_arcs(self, int64_t state) except *:
     """
     num_arcs(self, state)
@@ -1960,11 +1977,7 @@ cdef class Fst:
     """
     properties(self, mask, test)
 
-    Provides property bits.
-
-    This method provides user access to the properties attributes for the FST.
-    The resulting value is a long integer, but when it is cast to a boolean,
-    it represents whether or not the FST has the `mask` property.
+    Returns the FST properties.
 
     Args:
       mask: The property mask to be compared to the FST's properties.
@@ -1972,7 +1985,7 @@ cdef class Fst:
           the mask?
 
     Returns:
-      A FstProperties representing a 64-bit bitmask of the requested properties.
+      A bitmask.
     """
     return FstProperties(self._fst.get().Properties(mask.value, test))
 
@@ -2046,7 +2059,7 @@ cdef class Fst:
     """
     weight_type(self)
 
-    Provides the FST's weight type.
+    Returns the FST's weight type.
 
     Returns:
       A string representing the weight type.
@@ -2874,7 +2887,7 @@ cdef class MutableFst(Fst):
     """
     set_properties(self, props, mask)
 
-    Sets the properties bits.
+    Sets the properties.
 
     Args:
       props: The properties to be set.
@@ -3047,6 +3060,7 @@ NO_SYMBOL = fst.kNoSymbol
 
 ## FST properties.
 
+
 class FstProperties(enum.Flag):
   EXPANDED = fst.kExpanded
   MUTABLE = fst.kMutable
@@ -3114,24 +3128,47 @@ for name, member in FstProperties.__members__.items():
   globals()[name] = member
 
 
-## Arc iterator properties.
+## Weight properties.
 
 
-ARC_I_LABEL_VALUE = fst.kArcILabelValue
-ARC_O_LABEL_VALUE = fst.kArcOLabelValue
-ARC_WEIGHT_VALUE = fst.kArcWeightValue
-ARC_NEXT_STATE_VALUE = fst.kArcNextStateValue
-ARC_NO_CACHE = fst.kArcNoCache
-ARC_VALUE_FLAGS = fst.kArcValueFlags
-ARC_FLAGS = fst.kArcFlags
+class WeightProperties(enum.Flag):
+  LEFT_SEMIRING = fst.kLeftSemiring
+  RIGHT_SEMIRING = fst.kRightSemiring
+  SEMIRING = fst.kSemiring
+  COMMUTATIVE = fst.kCommutative
+  IDEMPOTENT = fst.kIdempotent
+  PATH = fst.kPath
+
+for name, member in WeightProperties.__members__.items():
+   globals()[name] = member
 
 
-## EncodeMapper properties.
+## Arc iterator flags.
 
 
-ENCODE_LABELS = fst.kEncodeLabels
-ENCODE_WEIGHTS = fst.kEncodeWeights
-ENCODE_FLAGS = fst.kEncodeFlags
+class ArcIteratorFlags(enum.Flag):
+  ARC_I_LABEL_VALUE = fst.kArcILabelValue
+  ARC_O_LABEL_VALUE = fst.kArcOLabelValue
+  ARC_WEIGHT_VALUE = fst.kArcWeightValue
+  ARC_NEXT_STATE_VALUE = fst.kArcNextStateValue
+  ARC_NO_CACHE = fst.kArcNoCache
+  ARC_VALUE_FLAGS = fst.kArcValueFlags
+  ARC_FLAGS = fst.kArcFlags
+
+for name, member in ArcIteratorFlags.__members__.items():
+   globals()[name] = member
+
+
+## EncodeMapper flags.
+
+
+class EncodeMapperFlags(enum.Flag):
+  ENCODE_LABELS = fst.kEncodeLabels
+  ENCODE_WEIGHTS = fst.kEncodeWeights
+  ENCODE_FLAGS = fst.kEncodeFlags
+
+for name, member in EncodeMapperFlags.__members__.items():
+   globals()[name] = member
 
 
 ## Arc.
@@ -3248,16 +3285,16 @@ cdef class _ArcIterator:
     """
     return self._aiter.get().Done()
 
-  cpdef uint8_t flags(self):
+  def flags(self):
     """
     flags(self)
 
-    Returns the current iterator behavioral flags.
+    Returns the iterator's flags.
 
     Returns:
-      The current iterator behavioral flags as an integer.
+      A bitmask.
     """
-    return self._aiter.get().Flags()
+    return ArcIteratorFlags(self._aiter.get().Flags())
 
   cpdef void next(self):
     """
@@ -3381,16 +3418,16 @@ cdef class _MutableArcIterator:
     """
     return self._aiter.get().Done()
 
-  cpdef uint8_t flags(self):
+  def flags(self):
     """
     flags(self)
 
-    Returns the current iterator behavioral flags.
+    Returns the iterator's flags.
 
     Returns:
-      The current iterator behavioral flags as an integer.
+      A bitmask.
     """
-    return self._aiter.get().Flags()
+    return ArcIteratorFlags(self._aiter.get().Flags())
 
   cpdef void next(self):
     """

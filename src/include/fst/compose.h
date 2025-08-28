@@ -574,6 +574,8 @@ void ComposeFstImpl<CacheStore, Filter, StateTable>::SetMatchType() {
 template <class A, class CacheStore /* = DefaultCacheStore<A> */>
 class ComposeFst
     : public ImplToFst<internal::ComposeFstImplBase<A, CacheStore>> {
+  using Base = ImplToFst<internal::ComposeFstImplBase<A, CacheStore>>;
+
  public:
   using Arc = A;
   using StateId = typename Arc::StateId;
@@ -582,7 +584,7 @@ class ComposeFst
   using Store = CacheStore;
   using State = typename CacheStore::State;
 
-  using Impl = internal::ComposeFstImplBase<A, CacheStore>;
+  using typename Base::Impl;
 
   friend class ArcIterator<ComposeFst<Arc, CacheStore>>;
   friend class StateIterator<ComposeFst<Arc, CacheStore>>;
@@ -592,7 +594,7 @@ class ComposeFst
   // Compose specifying only caching options.
   ComposeFst(const Fst<Arc> &fst1, const Fst<Arc> &fst2,
              const CacheOptions &opts = CacheOptions())
-      : ImplToFst<Impl>(CreateBase(fst1, fst2, opts)) {}
+      : Base(CreateBase(fst1, fst2, opts)) {}
 
   // Compose specifying one shared matcher type M. Requires that the input FSTs
   // and matcher FST types be Fst<Arc>. Recommended for best code-sharing and
@@ -600,7 +602,7 @@ class ComposeFst
   template <class Matcher, class Filter, class StateTuple>
   ComposeFst(const Fst<Arc> &fst1, const Fst<Arc> &fst2,
              const ComposeFstOptions<Arc, Matcher, Filter, StateTuple> &opts)
-      : ImplToFst<Impl>(CreateBase1(fst1, fst2, opts)) {}
+      : Base(CreateBase1(fst1, fst2, opts)) {}
 
   // Compose specifying two matcher types Matcher1 and Matcher2. Requires input
   // FST (of the same Arc type, but o.w. arbitrary) match the corresponding
@@ -612,12 +614,12 @@ class ComposeFst
              const typename Matcher2::FST &fst2,
              const ComposeFstImplOptions<Matcher1, Matcher2, Filter, StateTuple,
                                          CacheStore> &opts)
-      : ImplToFst<Impl>(CreateBase2(fst1, fst2, opts)) {}
+      : Base(CreateBase2(fst1, fst2, opts)) {}
 
   // See Fst<>::Copy() for doc.
   ComposeFst(const ComposeFst &fst, bool safe = false)
-      : ImplToFst<Impl>(safe ? std::shared_ptr<Impl>(fst.GetImpl()->Copy())
-                             : fst.GetSharedImpl()) {}
+      : Base(safe ? std::shared_ptr<Impl>(fst.GetImpl()->Copy())
+                  : fst.GetSharedImpl()) {}
 
   // Get a copy of this ComposeFst. See Fst<>::Copy() for further doc.
   ComposeFst *Copy(bool safe = false) const override {
@@ -635,10 +637,10 @@ class ComposeFst
   }
 
  protected:
-  using ImplToFst<Impl>::GetImpl;
-  using ImplToFst<Impl>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 
-  explicit ComposeFst(std::shared_ptr<Impl> impl) : ImplToFst<Impl>(impl) {}
+  explicit ComposeFst(std::shared_ptr<Impl> impl) : Base(impl) {}
 
   // Create compose implementation specifying two matcher types.
   template <class Matcher1, class Matcher2, class Filter, class StateTuple>

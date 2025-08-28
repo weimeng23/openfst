@@ -92,6 +92,8 @@ template <
     class F, class M, const char *Name, class Init = NullMatcherFstInit<M>,
     class Data = AddOnPair<typename M::MatcherData, typename M::MatcherData>>
 class MatcherFst : public ImplToExpandedFst<internal::AddOnImpl<F, Data>> {
+  using Base = ImplToExpandedFst<internal::AddOnImpl<F, Data>>;
+
  public:
   using FST = F;
   using Arc = typename FST::Arc;
@@ -100,32 +102,31 @@ class MatcherFst : public ImplToExpandedFst<internal::AddOnImpl<F, Data>> {
   using FstMatcher = M;
   using MatcherData = typename FstMatcher::MatcherData;
 
-  using Impl = internal::AddOnImpl<FST, Data>;
+  using typename Base::Impl;
   using D = Data;
 
   friend class StateIterator<MatcherFst<FST, FstMatcher, Name, Init, Data>>;
   friend class ArcIterator<MatcherFst<FST, FstMatcher, Name, Init, Data>>;
 
-  MatcherFst() : ImplToExpandedFst<Impl>(std::make_shared<Impl>(FST(), Name)) {}
+  MatcherFst() : Base(std::make_shared<Impl>(FST(), Name)) {}
 
   // Constructs a MatcherFst from an FST, which is the underlying FST type used
   // by this class. Uses the existing Data if present, and runs Init on it.
   // Stores fst internally, making a thread-safe copy of it.
   explicit MatcherFst(const FST &fst, std::shared_ptr<Data> data = nullptr)
-      : ImplToExpandedFst<Impl>(data ? CreateImpl(fst, Name, data)
-                                     : CreateDataAndImpl(fst, Name)) {}
+      : Base(data ? CreateImpl(fst, Name, data)
+                  : CreateDataAndImpl(fst, Name)) {}
 
   // Constructs a MatcherFst from an Fst<Arc>, which is *not* the underlying
   // FST type used by this class. Uses the existing Data if present, and
   // runs Init on it. Stores fst internally, converting Fst<Arc> to FST and
   // therefore making a deep copy.
   explicit MatcherFst(const Fst<Arc> &fst, std::shared_ptr<Data> data = nullptr)
-      : ImplToExpandedFst<Impl>(data ? CreateImpl(fst, Name, data)
-                                     : CreateDataAndImpl(fst, Name)) {}
+      : Base(data ? CreateImpl(fst, Name, data)
+                  : CreateDataAndImpl(fst, Name)) {}
 
   // See Fst<>::Copy() for doc.
-  MatcherFst(const MatcherFst &fst, bool safe = false)
-      : ImplToExpandedFst<Impl>(fst, safe) {}
+  MatcherFst(const MatcherFst &fst, bool safe = false) : Base(fst, safe) {}
 
   // Get a copy of this MatcherFst. See Fst<>::Copy() for further doc.
   MatcherFst *Copy(bool safe = false) const override {
@@ -141,7 +142,7 @@ class MatcherFst : public ImplToExpandedFst<internal::AddOnImpl<F, Data>> {
   // Read a MatcherFst from a file; return nullptr on error
   // Empty source reads from standard input
   static MatcherFst *Read(std::string_view source) {
-    auto *impl = ImplToExpandedFst<Impl>::Read(source);
+    auto *impl = Base::Read(source);
     return impl ? new MatcherFst(std::shared_ptr<Impl>(impl)) : nullptr;
   }
 
@@ -185,7 +186,7 @@ class MatcherFst : public ImplToExpandedFst<internal::AddOnImpl<F, Data>> {
   }
 
  protected:
-  using ImplToFst<Impl, ExpandedFst<Arc>>::GetImpl;
+  using Base::GetImpl;
 
   // Makes a thread-safe copy of fst.
   static std::shared_ptr<Impl> CreateDataAndImpl(const FST &fst,
@@ -224,8 +225,7 @@ class MatcherFst : public ImplToExpandedFst<internal::AddOnImpl<F, Data>> {
     return impl;
   }
 
-  explicit MatcherFst(std::shared_ptr<Impl> impl)
-      : ImplToExpandedFst<Impl>(impl) {}
+  explicit MatcherFst(std::shared_ptr<Impl> impl) : Base(impl) {}
 
  private:
   MatcherFst &operator=(const MatcherFst &) = delete;

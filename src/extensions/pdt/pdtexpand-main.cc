@@ -28,7 +28,6 @@
 #include <fst/log.h>
 #include <fst/extensions/pdt/pdtscript.h>
 #include <fst/util.h>
-#include <fst/script/arg-packs.h>
 #include <fst/script/fst-class.h>
 #include <fst/script/weight-class.h>
 

@@ -291,14 +291,17 @@ using StdMutableFst = MutableFst<StdArc>;
 
 // This is a helper class template useful for attaching a MutableFst interface
 // to its implementation, handling reference counting and COW semantics.
-template <class Impl, class FST = MutableFst<typename Impl::Arc>>
-class ImplToMutableFst : public ImplToExpandedFst<Impl, FST> {
+template <class I, class FST = MutableFst<typename I::Arc>>
+class ImplToMutableFst : public ImplToExpandedFst<I, FST> {
+  using Base = ImplToExpandedFst<I, FST>;
+
  public:
+  using Impl = I;
   using Arc = typename Impl::Arc;
   using StateId = typename Arc::StateId;
   using Weight = typename Arc::Weight;
 
-  using ImplToExpandedFst<Impl, FST>::operator=;
+  using Base::operator=;
 
   void SetStart(StateId s) override {
     MutateCheck();
@@ -404,17 +407,15 @@ class ImplToMutableFst : public ImplToExpandedFst<Impl, FST> {
   }
 
  protected:
-  using ImplToExpandedFst<Impl, FST>::GetImpl;
-  using ImplToExpandedFst<Impl, FST>::GetMutableImpl;
-  using ImplToExpandedFst<Impl, FST>::Unique;
-  using ImplToExpandedFst<Impl, FST>::SetImpl;
-  using ImplToExpandedFst<Impl, FST>::InputSymbols;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
+  using Base::InputSymbols;
+  using Base::SetImpl;
+  using Base::Unique;
 
-  explicit ImplToMutableFst(std::shared_ptr<Impl> impl)
-      : ImplToExpandedFst<Impl, FST>(impl) {}
+  explicit ImplToMutableFst(std::shared_ptr<Impl> impl) : Base(impl) {}
 
-  ImplToMutableFst(const ImplToMutableFst &fst, bool safe)
-      : ImplToExpandedFst<Impl, FST>(fst, safe) {}
+  ImplToMutableFst(const ImplToMutableFst &fst, bool safe) : Base(fst, safe) {}
 
   void MutateCheck() {
     if (!Unique()) SetImpl(std::make_shared<Impl>(*this));

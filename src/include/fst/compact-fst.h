@@ -250,7 +250,7 @@ class CompactArcStore {
   CompactArcStore(const Fst<Arc> &fst, const ArcCompactor &arc_compactor);
 
   template <class Iterator, class ArcCompactor>
-  CompactArcStore(const Iterator begin, const Iterator end,
+  CompactArcStore(Iterator begin, Iterator end,
                   const ArcCompactor &arc_compactor);
 
   ~CompactArcStore() = default;
@@ -1107,6 +1107,8 @@ const Compactor *GetCompactor(const Fst<Arc> &fst) {
 template <class A, class C, class CacheStore>
 class CompactFst
     : public ImplToExpandedFst<internal::CompactFstImpl<A, C, CacheStore>> {
+  using Base = ImplToExpandedFst<internal::CompactFstImpl<A, C, CacheStore>>;
+
  public:
   template <class F, class G>
   void friend Cast(const F &, G *);
@@ -1114,13 +1116,13 @@ class CompactFst
   using Arc = A;
   using StateId = typename Arc::StateId;
   using Compactor = C;
-  using Impl = internal::CompactFstImpl<Arc, Compactor, CacheStore>;
+  using typename Base::Impl;
   using Store = CacheStore;  // for CacheArcIterator
 
   friend class StateIterator<CompactFst>;
   friend class ArcIterator<CompactFst>;
 
-  CompactFst() : ImplToExpandedFst<Impl>(std::make_shared<Impl>()) {}
+  CompactFst() : Base(std::make_shared<Impl>()) {}
 
   explicit CompactFst(const Fst<Arc> &fst,
                       const CompactFstOptions &opts = CompactFstOptions())
@@ -1132,8 +1134,7 @@ class CompactFst
   // description.
   CompactFst(const Fst<Arc> &fst, std::shared_ptr<Compactor> compactor,
              const CompactFstOptions &opts = CompactFstOptions())
-      : ImplToExpandedFst<Impl>(
-            std::make_shared<Impl>(fst, std::move(compactor), opts)) {}
+      : Base(std::make_shared<Impl>(fst, std::move(compactor), opts)) {}
 
   // Convenience constructor taking a Compactor rvalue ref. Avoids
   // clutter of make_shared<Compactor> at call site.
@@ -1148,12 +1149,10 @@ class CompactFst
 
   explicit CompactFst(std::shared_ptr<Compactor> compactor,
                       const CompactFstOptions &opts = CompactFstOptions())
-      : ImplToExpandedFst<Impl>(
-            std::make_shared<Impl>(std::move(compactor), opts)) {}
+      : Base(std::make_shared<Impl>(std::move(compactor), opts)) {}
 
   // See Fst<>::Copy() for doc.
-  CompactFst(const CompactFst &fst, bool safe = false)
-      : ImplToExpandedFst<Impl>(fst, safe) {}
+  CompactFst(const CompactFst &fst, bool safe = false) : Base(fst, safe) {}
 
   // Get a copy of this CompactFst. See Fst<>::Copy() for further doc.
   CompactFst *Copy(bool safe = false) const override {
@@ -1169,7 +1168,7 @@ class CompactFst
   // Read a CompactFst from a file; return nullptr on error
   // Empty source reads from standard input
   static CompactFst *Read(std::string_view source) {
-    auto *impl = ImplToExpandedFst<Impl>::Read(source);
+    auto *impl = Base::Read(source);
     return impl ? new CompactFst(std::shared_ptr<Impl>(impl)) : nullptr;
   }
 
@@ -1200,11 +1199,10 @@ class CompactFst
   }
 
  private:
-  using ImplToFst<Impl, ExpandedFst<Arc>>::GetImpl;
-  using ImplToFst<Impl, ExpandedFst<Arc>>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 
-  explicit CompactFst(std::shared_ptr<Impl> impl)
-      : ImplToExpandedFst<Impl>(std::move(impl)) {}
+  explicit CompactFst(std::shared_ptr<Impl> impl) : Base(std::move(impl)) {}
 
   CompactFst &operator=(const CompactFst &fst) = delete;
 };

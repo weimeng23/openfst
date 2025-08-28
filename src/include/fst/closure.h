@@ -101,6 +101,8 @@ struct ClosureFstOptions : RationalFstOptions {
 // input state or arc is assumed and exclusive of caching.
 template <class A>
 class ClosureFst : public RationalFst<A> {
+  using Base = RationalFst<A>;
+
  public:
   using Arc = A;
 
@@ -108,14 +110,12 @@ class ClosureFst : public RationalFst<A> {
     GetMutableImpl()->InitClosure(fst, closure_type);
   }
 
-  ClosureFst(const Fst<Arc> &fst, const ClosureFstOptions &opts)
-      : RationalFst<A>(opts) {
+  ClosureFst(const Fst<Arc> &fst, const ClosureFstOptions &opts) : Base(opts) {
     GetMutableImpl()->InitClosure(fst, opts.type);
   }
 
   // See Fst<>::Copy() for doc.
-  ClosureFst(const ClosureFst &fst, bool safe = false)
-      : RationalFst<A>(fst, safe) {}
+  ClosureFst(const ClosureFst &fst, bool safe = false) : Base(fst, safe) {}
 
   // Gets a copy of this ClosureFst. See Fst<>::Copy() for further doc.
   ClosureFst *Copy(bool safe = false) const override {
@@ -123,8 +123,8 @@ class ClosureFst : public RationalFst<A> {
   }
 
  private:
-  using ImplToFst<internal::RationalFstImpl<Arc>>::GetImpl;
-  using ImplToFst<internal::RationalFstImpl<Arc>>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 };
 
 // Specialization for ClosureFst.

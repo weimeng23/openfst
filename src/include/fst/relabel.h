@@ -48,10 +48,8 @@ namespace fst {
 template <class Arc>
 void Relabel(
     MutableFst<Arc> *fst,
-    const std::vector<std::pair<typename Arc::Label, typename Arc::Label>>
-        &ipairs,
-    const std::vector<std::pair<typename Arc::Label, typename Arc::Label>>
-        &opairs) {
+    const std::vector<std::pair<typename Arc::Label, typename Arc::Label>> &        ipairs,
+    const std::vector<std::pair<typename Arc::Label, typename Arc::Label>> &        opairs) {
   using Label = typename Arc::Label;
   const auto props = fst->Properties(kFstProperties, false);
   // Constructs label-to-label maps.
@@ -368,6 +366,8 @@ class RelabelFstImpl : public CacheImpl<Arc> {
 // reference counting, delegating most methods to ImplToFst.
 template <class A>
 class RelabelFst : public ImplToFst<internal::RelabelFstImpl<A>> {
+  using Base = ImplToFst<internal::RelabelFstImpl<A>>;
+
  public:
   using Arc = A;
   using Label = typename Arc::Label;
@@ -376,7 +376,7 @@ class RelabelFst : public ImplToFst<internal::RelabelFstImpl<A>> {
 
   using Store = DefaultCacheStore<Arc>;
   using State = typename Store::State;
-  using Impl = internal::RelabelFstImpl<Arc>;
+  using typename Base::Impl;
 
   friend class ArcIterator<RelabelFst<A>>;
   friend class StateIterator<RelabelFst<A>>;
@@ -385,26 +385,23 @@ class RelabelFst : public ImplToFst<internal::RelabelFstImpl<A>> {
              const std::vector<std::pair<Label, Label>> &ipairs,
              const std::vector<std::pair<Label, Label>> &opairs,
              const RelabelFstOptions &opts = RelabelFstOptions())
-      : ImplToFst<Impl>(std::make_shared<Impl>(fst, ipairs, opairs, opts)) {}
+      : Base(std::make_shared<Impl>(fst, ipairs, opairs, opts)) {}
 
   RelabelFst(const Fst<Arc> &fst, const SymbolTable *new_isymbols,
              const SymbolTable *new_osymbols,
              const RelabelFstOptions &opts = RelabelFstOptions())
-      : ImplToFst<Impl>(
-            std::make_shared<Impl>(fst, fst.InputSymbols(), new_isymbols,
-                                   fst.OutputSymbols(), new_osymbols, opts)) {}
+      : Base(std::make_shared<Impl>(fst, fst.InputSymbols(), new_isymbols,
+                                    fst.OutputSymbols(), new_osymbols, opts)) {}
 
   RelabelFst(const Fst<Arc> &fst, const SymbolTable *old_isymbols,
              const SymbolTable *new_isymbols, const SymbolTable *old_osymbols,
              const SymbolTable *new_osymbols,
              const RelabelFstOptions &opts = RelabelFstOptions())
-      : ImplToFst<Impl>(std::make_shared<Impl>(fst, old_isymbols, new_isymbols,
-                                               old_osymbols, new_osymbols,
-                                               opts)) {}
+      : Base(std::make_shared<Impl>(fst, old_isymbols, new_isymbols,
+                                    old_osymbols, new_osymbols, opts)) {}
 
   // See Fst<>::Copy() for doc.
-  RelabelFst(const RelabelFst &fst, bool safe = false)
-      : ImplToFst<Impl>(fst, safe) {}
+  RelabelFst(const RelabelFst &fst, bool safe = false) : Base(fst, safe) {}
 
   // Gets a copy of this RelabelFst. See Fst<>::Copy() for further doc.
   RelabelFst *Copy(bool safe = false) const override {
@@ -418,8 +415,8 @@ class RelabelFst : public ImplToFst<internal::RelabelFstImpl<A>> {
   }
 
  private:
-  using ImplToFst<Impl>::GetImpl;
-  using ImplToFst<Impl>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 
   RelabelFst &operator=(const RelabelFst &) = delete;
 };

@@ -219,6 +219,8 @@ class MPdtExpandFstImpl : public CacheImpl<Arc> {
 // reference counting, delegating most methods to ImplToFst.
 template <class A>
 class MPdtExpandFst : public ImplToFst<internal::MPdtExpandFstImpl<A>> {
+  using Base = ImplToFst<internal::MPdtExpandFstImpl<A>>;
+
  public:
   using Arc = A;
   using Label = typename Arc::Label;
@@ -229,7 +231,7 @@ class MPdtExpandFst : public ImplToFst<internal::MPdtExpandFstImpl<A>> {
   using ParenStack = internal::MPdtStack<StackId, Label>;
   using Store = DefaultCacheStore<Arc>;
   using State = typename Store::State;
-  using Impl = internal::MPdtExpandFstImpl<Arc>;
+  using typename Base::Impl;
 
   friend class ArcIterator<MPdtExpandFst<Arc>>;
   friend class StateIterator<MPdtExpandFst<Arc>>;
@@ -237,19 +239,18 @@ class MPdtExpandFst : public ImplToFst<internal::MPdtExpandFstImpl<A>> {
   MPdtExpandFst(const Fst<Arc> &fst,
                 const std::vector<std::pair<Label, Label>> &parens,
                 const std::vector<Label> &assignments)
-      : ImplToFst<Impl>(std::make_shared<Impl>(fst, parens, assignments,
-                                               MPdtExpandFstOptions<Arc>())) {}
+      : Base(std::make_shared<Impl>(fst, parens, assignments,
+                                    MPdtExpandFstOptions<Arc>())) {}
 
   MPdtExpandFst(const Fst<Arc> &fst,
                 const std::vector<std::pair<Label, Label>> &parens,
                 const std::vector<Label> &assignments,
                 const MPdtExpandFstOptions<Arc> &opts)
-      : ImplToFst<Impl>(
-            std::make_shared<Impl>(fst, parens, assignments, opts)) {}
+      : Base(std::make_shared<Impl>(fst, parens, assignments, opts)) {}
 
   // See Fst<>::Copy() for doc.
   MPdtExpandFst(const MPdtExpandFst<Arc> &fst, bool safe = false)
-      : ImplToFst<Impl>(fst, safe) {}
+      : Base(fst, safe) {}
 
   // Get a copy of this ExpandFst. See Fst<>::Copy() for further doc.
   MPdtExpandFst<Arc> *Copy(bool safe = false) const override {
@@ -269,8 +270,8 @@ class MPdtExpandFst : public ImplToFst<internal::MPdtExpandFstImpl<A>> {
   }
 
  private:
-  using ImplToFst<Impl>::GetImpl;
-  using ImplToFst<Impl>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 
   void operator=(const MPdtExpandFst &) = delete;
 };

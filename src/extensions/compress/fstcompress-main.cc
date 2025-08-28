@@ -25,7 +25,6 @@
 #include <fst/log.h>
 #include <fst/extensions/compress/compressscript.h>
 #include <fst/util.h>
-#include <fst/script/arg-packs.h>
 #include <fst/script/fst-class.h>
 
 DECLARE_string(arc_type);

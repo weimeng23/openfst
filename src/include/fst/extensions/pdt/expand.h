@@ -229,6 +229,8 @@ class PdtExpandFstImpl : public CacheImpl<Arc> {
 // counting, delegating most methods to ImplToFst.
 template <class A>
 class PdtExpandFst : public ImplToFst<internal::PdtExpandFstImpl<A>> {
+  using Base = ImplToFst<internal::PdtExpandFstImpl<A>>;
+
  public:
   using Arc = A;
 
@@ -239,24 +241,23 @@ class PdtExpandFst : public ImplToFst<internal::PdtExpandFstImpl<A>> {
   using StackId = StateId;
   using Store = DefaultCacheStore<Arc>;
   using State = typename Store::State;
-  using Impl = internal::PdtExpandFstImpl<Arc>;
+  using typename Base::Impl;
 
   friend class ArcIterator<PdtExpandFst<Arc>>;
   friend class StateIterator<PdtExpandFst<Arc>>;
 
   PdtExpandFst(const Fst<Arc> &fst,
                const std::vector<std::pair<Label, Label>> &parens)
-      : ImplToFst<Impl>(
-            std::make_shared<Impl>(fst, parens, PdtExpandFstOptions<A>())) {}
+      : Base(std::make_shared<Impl>(fst, parens, PdtExpandFstOptions<A>())) {}
 
   PdtExpandFst(const Fst<Arc> &fst,
                const std::vector<std::pair<Label, Label>> &parens,
                const PdtExpandFstOptions<Arc> &opts)
-      : ImplToFst<Impl>(std::make_shared<Impl>(fst, parens, opts)) {}
+      : Base(std::make_shared<Impl>(fst, parens, opts)) {}
 
   // See Fst<>::Copy() for doc.
   PdtExpandFst(const PdtExpandFst<Arc> &fst, bool safe = false)
-      : ImplToFst<Impl>(fst, safe) {}
+      : Base(fst, safe) {}
 
   // Gets a copy of this ExpandFst. See Fst<>::Copy() for further doc.
   PdtExpandFst<Arc> *Copy(bool safe = false) const override {
@@ -278,8 +279,8 @@ class PdtExpandFst : public ImplToFst<internal::PdtExpandFstImpl<A>> {
   }
 
  private:
-  using ImplToFst<Impl>::GetImpl;
-  using ImplToFst<Impl>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 
   void operator=(const PdtExpandFst &) = delete;
 };
@@ -441,8 +442,7 @@ class PdtPrunedExpand {
               state_table, stack, stack_length, distance, fdistance)) {}
   };
 
-  void InitCloseParenMultimap(
-      const std::vector<std::pair<Label, Label>> &parens);
+  void InitCloseParenMultimap(const std::vector<std::pair<Label, Label>> &parens);
 
   Weight DistanceToDest(StateId source, StateId dest) const;
 

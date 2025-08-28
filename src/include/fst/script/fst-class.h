@@ -24,6 +24,7 @@
 #include <istream>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <type_traits>
@@ -66,6 +67,7 @@ class FstClassBase {
   virtual size_t NumArcs(int64_t) const = 0;
   virtual size_t NumInputEpsilons(int64_t) const = 0;
   virtual size_t NumOutputEpsilons(int64_t) const = 0;
+  virtual std::optional<int64_t> NumStatesIfKnown() const = 0;
   virtual const SymbolTable *OutputSymbols() const = 0;
   virtual uint64_t Properties(uint64_t, bool) const = 0;
   virtual int64_t Start() const = 0;
@@ -215,6 +217,10 @@ class FstClassImpl : public FstClassImplBase {
     return down_cast<MutableFst<Arc> *>(impl_.get())->NumStates();
   }
 
+  std::optional<int64_t> NumStatesIfKnown() const final {
+    return impl_->NumStatesIfKnown();
+  }
+
   uint64_t Properties(uint64_t mask, bool test) const final {
     return impl_->Properties(mask, test);
   }
@@ -342,6 +348,10 @@ class FstClass : public FstClassBase {
 
   size_t NumOutputEpsilons(int64_t s) const final {
     return impl_->NumOutputEpsilons(s);
+  }
+
+  std::optional<int64_t> NumStatesIfKnown() const final {
+    return impl_->NumStatesIfKnown();
   }
 
   const SymbolTable *OutputSymbols() const final {

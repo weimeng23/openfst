@@ -347,7 +347,10 @@ class LabelReachable {
       for (size_t i = 1; i <= label2index.size(); ++i) {
         const auto it = label2index.find(i);
         bool unmapped = it == label2index.end();
-        if (unmapped) unmapped = oov_label2index_.count(i) == 0;
+        if (unmapped) {
+          // TODO: Use contains() when C++20 is allowed in OpenFST.
+          unmapped = oov_label2index_.find(i) == oov_label2index_.end();
+        }
         if (unmapped || it->second == data_->FinalLabel()) {
           pairs->emplace_back(i, label2index.size() + 1);
         }

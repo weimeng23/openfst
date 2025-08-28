@@ -346,6 +346,8 @@ class StateMapFstImpl : public CacheImpl<B> {
 // C. This version is a delayed FST.
 template <class A, class B, class C>
 class StateMapFst : public ImplToFst<internal::StateMapFstImpl<A, B, C>> {
+  using Base = ImplToFst<internal::StateMapFstImpl<A, B, C>>;
+
  public:
   friend class ArcIterator<StateMapFst<A, B, C>>;
 
@@ -354,26 +356,23 @@ class StateMapFst : public ImplToFst<internal::StateMapFstImpl<A, B, C>> {
   using Weight = typename Arc::Weight;
   using Store = DefaultCacheStore<Arc>;
   using State = typename Store::State;
-  using Impl = internal::StateMapFstImpl<A, B, C>;
+  using typename Base::Impl;
 
   StateMapFst(const Fst<A> &fst, const C &mapper,
               const StateMapFstOptions &opts)
-      : ImplToFst<Impl>(std::make_shared<Impl>(fst, mapper, opts)) {}
+      : Base(std::make_shared<Impl>(fst, mapper, opts)) {}
 
   StateMapFst(const Fst<A> &fst, C *mapper, const StateMapFstOptions &opts)
-      : ImplToFst<Impl>(std::make_shared<Impl>(fst, mapper, opts)) {}
+      : Base(std::make_shared<Impl>(fst, mapper, opts)) {}
 
   StateMapFst(const Fst<A> &fst, const C &mapper)
-      : ImplToFst<Impl>(
-            std::make_shared<Impl>(fst, mapper, StateMapFstOptions())) {}
+      : Base(std::make_shared<Impl>(fst, mapper, StateMapFstOptions())) {}
 
   StateMapFst(const Fst<A> &fst, C *mapper)
-      : ImplToFst<Impl>(
-            std::make_shared<Impl>(fst, mapper, StateMapFstOptions())) {}
+      : Base(std::make_shared<Impl>(fst, mapper, StateMapFstOptions())) {}
 
   // See Fst<>::Copy() for doc.
-  StateMapFst(const StateMapFst &fst, bool safe = false)
-      : ImplToFst<Impl>(fst, safe) {}
+  StateMapFst(const StateMapFst &fst, bool safe = false) : Base(fst, safe) {}
 
   // Get a copy of this StateMapFst. See Fst<>::Copy() for further doc.
   StateMapFst *Copy(bool safe = false) const override {
@@ -389,8 +388,8 @@ class StateMapFst : public ImplToFst<internal::StateMapFstImpl<A, B, C>> {
   }
 
  protected:
-  using ImplToFst<Impl>::GetImpl;
-  using ImplToFst<Impl>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 
  private:
   StateMapFst &operator=(const StateMapFst &) = delete;

@@ -78,8 +78,16 @@ class FarHeader {
   bool Read(const std::string &source) {
     FstHeader fsthdr;
     arctype_ = "unknown";
-    if (source.empty()) {
+    // This function assumes that opening `source` multiple times will
+    // produce the same sequence of bytes.  This is definitely not the case
+    // for `/dev/stdin`.  Of course, there are many other ways to spell this,
+    // and we can't detect them all, but we make a tiny effort to provide a
+    // reasonable warning.  Maybe we should be checking for a regular file
+    // instead?
+    if (source.empty() || source == "/dev/stdin") {
       // Header reading unsupported on stdin. Assumes STList and StdArc.
+      LOG(WARNING) << "Cannot reopen stdin; assuming far_type=stlist and "
+                      "arc_type=standard; either may be wrong.";
       fartype_ = FarType::STLIST;
       arctype_ = "standard";
       return true;

@@ -846,8 +846,11 @@ class ReplaceFstImpl
       *arcp = arc;
       return true;
     }
-    if (arc.olabel == 0 || arc.olabel < *nonterminal_set_.begin() ||
-        arc.olabel > *nonterminal_set_.rbegin()) {  // Expands local FST.
+    // NB: These redundant parentheses are necessary to avoid a compiler warning
+    // in GCC where `arc.olabel <...>` is interpreted to be a template usage:
+    // https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wmissing-template-keyword
+    if (arc.olabel == 0 || (arc.olabel < *nonterminal_set_.begin()) ||
+        (arc.olabel > *nonterminal_set_.rbegin())) {  // Expands local FST.
       const auto nextstate =
           flags & kArcNextStateValue
               ? state_table_->FindState(
@@ -992,6 +995,8 @@ template <class A, class T /* = DefaultReplaceStateTable<A> */,
           class CacheStore /* = DefaultCacheStore<A> */>
 class ReplaceFst
     : public ImplToFst<internal::ReplaceFstImpl<A, T, CacheStore>> {
+  using Base = ImplToFst<internal::ReplaceFstImpl<A, T, CacheStore>>;
+
  public:
   using Arc = A;
   using Label = typename Arc::Label;
@@ -1001,10 +1006,10 @@ class ReplaceFst
   using StateTable = T;
   using Store = CacheStore;
   using State = typename CacheStore::State;
-  using Impl = internal::ReplaceFstImpl<Arc, StateTable, CacheStore>;
+  using typename Base::Impl;
   using CacheImpl = internal::CacheBaseImpl<State, CacheStore>;
 
-  using ImplToFst<Impl>::Properties;
+  using Base::Properties;
 
   friend class ArcIterator<ReplaceFst<Arc, StateTable, CacheStore>>;
   friend class StateIterator<ReplaceFst<Arc, StateTable, CacheStore>>;
@@ -1012,16 +1017,15 @@ class ReplaceFst
 
   ReplaceFst(const std::vector<std::pair<Label, const Fst<Arc> *>> &fst_array,
              Label root)
-      : ImplToFst<Impl>(std::make_shared<Impl>(
+      : Base(std::make_shared<Impl>(
             fst_array, ReplaceFstOptions<Arc, StateTable, CacheStore>(root))) {}
 
   ReplaceFst(const std::vector<std::pair<Label, const Fst<Arc> *>> &fst_array,
              const ReplaceFstOptions<Arc, StateTable, CacheStore> &opts)
-      : ImplToFst<Impl>(std::make_shared<Impl>(fst_array, opts)) {}
+      : Base(std::make_shared<Impl>(fst_array, opts)) {}
 
   // See Fst<>::Copy() for doc.
-  ReplaceFst(const ReplaceFst &fst, bool safe = false)
-      : ImplToFst<Impl>(fst, safe) {}
+  ReplaceFst(const ReplaceFst &fst, bool safe = false) : Base(fst, safe) {}
 
   // Get a copy of this ReplaceFst. See Fst<>::Copy() for further doc.
   ReplaceFst *Copy(bool safe = false) const override {
@@ -1057,8 +1061,8 @@ class ReplaceFst
   }
 
  private:
-  using ImplToFst<Impl>::GetImpl;
-  using ImplToFst<Impl>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 
   ReplaceFst &operator=(const ReplaceFst &) = delete;
 };

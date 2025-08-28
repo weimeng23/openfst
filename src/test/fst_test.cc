@@ -17,7 +17,7 @@
 //
 // Regression test for FST classes.
 
-#include <fst/fst.h>
+#include <fst/test/fst_test.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -27,19 +27,17 @@
 
 #include <fst/log.h>
 #include <fst/arc.h>
-#include <fst/cache.h>
 #include <fst/compact-fst.h>
 #include <fst/const-fst.h>
 #include <fst/edit-fst.h>
 #include <fst/float-weight.h>
 #include <fst/fst-decl.h>
 #include <fst/matcher-fst.h>
-#include <fst/pair-weight.h>
 #include <fst/product-weight.h>
 #include <fst/register.h>
+#include <fst/test-properties.h>
 #include <fst/vector-fst.h>
 #include <fst/test/compactors.h>
-#include <fst/test/fst_test.h>
 
 namespace fst {
 namespace {

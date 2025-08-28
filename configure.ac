@@ -1,18 +1,14 @@
-AC_INIT([OpenFst],[1.8.3],[help@www.openfst.org])
+AC_INIT([OpenFst], [1.8.4], [help@www.openfst.org])
 AM_INIT_AUTOMAKE([foreign nostdinc -Wall -Werror subdir-objects])
 AM_PROG_AR
 
 AC_PROG_CXX
 # This library does not throw exceptions, so we do not generate exception
 # handling code. However, users are free to re-enable exception handling.
-CXX="$CXX \
-    -std=c++17 \
-    -fno-exceptions \
-    -Wno-deprecated-declarations \
-    -Wno-missing-template-keyword"
+CXX="$CXX -std=c++17 -fno-exceptions -Wno-deprecated-declarations"
 
 AC_DISABLE_STATIC
-LT_INIT
+AC_PROG_LIBTOOL
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_SRCDIR([src/lib/fst.cc])

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-/// See www.openfst.org for extensive documentation on this weighted
+// See www.openfst.org for extensive documentation on this weighted
 // finite-state transducer library.
 //
 // Utilities to convert strings into FSTs.
@@ -167,7 +167,7 @@ bool LabelsToNumericString(const std::vector<Label> &labels, std::string *str,
 
 // Functor for compiling a string in an FST.
 template <class Arc>
-class OPENFST_DEPRECATED("allow_negative is no-op") StringCompiler {
+class StringCompiler {
  public:
   using Label = typename Arc::Label;
   using StateId = typename Arc::StateId;
@@ -179,9 +179,8 @@ class OPENFST_DEPRECATED("allow_negative is no-op") StringCompiler {
       : token_type_(token_type), syms_(syms), unknown_label_(unknown_label) {}
 
   // Compiles string into an FST. With SYMBOL token type, sep is used to
-  // specify the set of char separators between symbols, in addition
-  // of '\n' which is always treated as a separator.
-  // Returns true on success.
+  // specify the set of char separators between symbols, in addition of '\n',
+  // which is always treated as a separator. Returns true on success.
   template <class FST>
   bool operator()(
       std::string_view str, FST *fst,

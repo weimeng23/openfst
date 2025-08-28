@@ -25,7 +25,6 @@
 #include <utility>
 
 #include <fst/flags.h>
-#include <fst/log.h>
 #include <fst/expectation-weight.h>
 #include <fst/float-weight.h>
 #include <fst/lexicographic-weight.h>
@@ -35,9 +34,7 @@
 #include <fst/set-weight.h>
 #include <fst/signed-log-weight.h>
 #include <fst/sparse-power-weight.h>
-#include <fst/sparse-tuple-weight.h>
 #include <fst/string-weight.h>
-#include <fst/tuple-weight.h>
 #include <fst/union-weight.h>
 #include <fst/test/weight-tester.h>
 

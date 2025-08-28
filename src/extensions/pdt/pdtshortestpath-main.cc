@@ -29,7 +29,6 @@
 #include <fst/extensions/pdt/pdtscript.h>
 #include <fst/queue.h>
 #include <fst/util.h>
-#include <fst/script/arg-packs.h>
 #include <fst/script/fst-class.h>
 
 DECLARE_bool(keep_parentheses);

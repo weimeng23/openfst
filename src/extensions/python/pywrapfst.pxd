@@ -76,9 +76,9 @@ cdef class Weight:
 
   cpdef Weight copy(self)
 
-  cpdef string to_string(self)
-
   cpdef string type(self)
+
+  cpdef string to_string(self)
 
   cpdef bool member(self)
 
@@ -212,8 +212,6 @@ cdef class EncodeMapper:
   cpdef string arc_type(self)
 
   cpdef string weight_type(self)
-
-  cpdef uint8_t flags(self)
 
   cpdef void write(self, source) except *
 
@@ -428,8 +426,6 @@ cdef class _ArcIterator:
 
   cpdef bool done(self)
 
-  cpdef uint8_t flags(self)
-
   cpdef void next(self)
 
   cpdef size_t position(self)
@@ -449,8 +445,6 @@ cdef class _MutableArcIterator:
   cdef unique_ptr[fst.MutableArcIteratorClass] _aiter
 
   cpdef bool done(self)
-
-  cpdef uint8_t flags(self)
 
   cpdef void next(self)
 

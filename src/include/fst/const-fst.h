@@ -242,11 +242,13 @@ ConstFstImpl<Arc, Unsigned> *ConstFstImpl<Arc, Unsigned>::Read(
 // ConstFst is thread-safe.
 template <class A, class Unsigned>
 class ConstFst : public ImplToExpandedFst<internal::ConstFstImpl<A, Unsigned>> {
+  using Base = ImplToExpandedFst<internal::ConstFstImpl<A, Unsigned>>;
+
  public:
   using Arc = A;
   using StateId = typename Arc::StateId;
 
-  using Impl = internal::ConstFstImpl<A, Unsigned>;
+  using typename Base::Impl;
   using ConstState = typename Impl::ConstState;
 
   friend class StateIterator<ConstFst<Arc, Unsigned>>;
@@ -255,13 +257,12 @@ class ConstFst : public ImplToExpandedFst<internal::ConstFstImpl<A, Unsigned>> {
   template <class F, class G>
   void friend Cast(const F &, G *);
 
-  ConstFst() : ImplToExpandedFst<Impl>(std::make_shared<Impl>()) {}
+  ConstFst() : Base(std::make_shared<Impl>()) {}
 
-  explicit ConstFst(const Fst<Arc> &fst)
-      : ImplToExpandedFst<Impl>(std::make_shared<Impl>(fst)) {}
+  explicit ConstFst(const Fst<Arc> &fst) : Base(std::make_shared<Impl>(fst)) {}
 
   ConstFst(const ConstFst &fst, bool unused_safe = false)
-      : ImplToExpandedFst<Impl>(fst.GetSharedImpl()) {}
+      : Base(fst.GetSharedImpl()) {}
 
   // Gets a copy of this ConstFst. See Fst<>::Copy() for further doc.
   ConstFst *Copy(bool safe = false) const override {
@@ -277,7 +278,7 @@ class ConstFst : public ImplToExpandedFst<internal::ConstFstImpl<A, Unsigned>> {
   // Read a ConstFst from a file; return nullptr on error; empty source reads
   // from standard input.
   static ConstFst *Read(std::string_view source) {
-    auto *impl = ImplToExpandedFst<Impl>::Read(source);
+    auto *impl = Base::Read(source);
     return impl ? new ConstFst(std::shared_ptr<Impl>(impl)) : nullptr;
   }
 
@@ -302,10 +303,9 @@ class ConstFst : public ImplToExpandedFst<internal::ConstFstImpl<A, Unsigned>> {
   }
 
  private:
-  explicit ConstFst(std::shared_ptr<Impl> impl)
-      : ImplToExpandedFst<Impl>(impl) {}
+  explicit ConstFst(std::shared_ptr<Impl> impl) : Base(impl) {}
 
-  using ImplToFst<Impl, ExpandedFst<Arc>>::GetImpl;
+  using Base::GetImpl;
 
   // Uses overloading to extract the type of the argument.
   static const Impl *GetImplIfConstFst(const ConstFst &const_fst) {

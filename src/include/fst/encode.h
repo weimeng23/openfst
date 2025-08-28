@@ -54,7 +54,7 @@ enum EncodeType { ENCODE = 1, DECODE = 2 };
 
 inline constexpr uint8_t kEncodeLabels = 0x01;
 inline constexpr uint8_t kEncodeWeights = 0x02;
-inline constexpr uint8_t kEncodeFlags = 0x03;
+inline constexpr uint8_t kEncodeFlags = kEncodeLabels | kEncodeWeights;
 
 namespace internal {
 
@@ -523,22 +523,23 @@ inline void Decode(MutableFst<Arc> *fst, const EncodeMapper<Arc> &mapper) {
 // exclusive of caching.
 template <class Arc>
 class EncodeFst : public ArcMapFst<Arc, Arc, EncodeMapper<Arc>> {
+  using Base = ArcMapFst<Arc, Arc, EncodeMapper<Arc>>;
+
  public:
   using Mapper = EncodeMapper<Arc>;
-  using Impl = internal::ArcMapFstImpl<Arc, Arc, Mapper>;
+  using typename Base::Impl;
 
   EncodeFst(const Fst<Arc> &fst, Mapper *encoder)
-      : ArcMapFst<Arc, Arc, Mapper>(fst, encoder, ArcMapFstOptions()) {
+      : Base(fst, encoder, ArcMapFstOptions()) {
     encoder->SetInputSymbols(fst.InputSymbols());
     encoder->SetOutputSymbols(fst.OutputSymbols());
   }
 
   EncodeFst(const Fst<Arc> &fst, const Mapper &encoder)
-      : ArcMapFst<Arc, Arc, Mapper>(fst, encoder, ArcMapFstOptions()) {}
+      : Base(fst, encoder, ArcMapFstOptions()) {}
 
   // See Fst<>::Copy() for doc.
-  EncodeFst(const EncodeFst &fst, bool copy = false)
-      : ArcMapFst<Arc, Arc, Mapper>(fst, copy) {}
+  EncodeFst(const EncodeFst &fst, bool copy = false) : Base(fst, copy) {}
 
   // Makes a copy of this EncodeFst. See Fst<>::Copy() for further doc.
   EncodeFst *Copy(bool safe = false) const override {
@@ -550,8 +551,8 @@ class EncodeFst : public ArcMapFst<Arc, Arc, EncodeMapper<Arc>> {
   }
 
  private:
-  using ImplToFst<Impl>::GetImpl;
-  using ImplToFst<Impl>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 };
 
 // On-the-fly decoding of an input FST.
@@ -565,20 +566,20 @@ class EncodeFst : public ArcMapFst<Arc, Arc, EncodeMapper<Arc>> {
 // exclusive of caching.
 template <class Arc>
 class DecodeFst : public ArcMapFst<Arc, Arc, EncodeMapper<Arc>> {
+  using Base = ArcMapFst<Arc, Arc, EncodeMapper<Arc>>;
+
  public:
   using Mapper = EncodeMapper<Arc>;
-  using Impl = internal::ArcMapFstImpl<Arc, Arc, Mapper>;
+  using typename Base::Impl;
 
   DecodeFst(const Fst<Arc> &fst, const Mapper &encoder)
-      : ArcMapFst<Arc, Arc, Mapper>(fst, Mapper(encoder, DECODE),
-                                    ArcMapFstOptions()) {
+      : Base(fst, Mapper(encoder, DECODE), ArcMapFstOptions()) {
     GetMutableImpl()->SetInputSymbols(encoder.InputSymbols());
     GetMutableImpl()->SetOutputSymbols(encoder.OutputSymbols());
   }
 
   // See Fst<>::Copy() for doc.
-  DecodeFst(const DecodeFst &fst, bool safe = false)
-      : ArcMapFst<Arc, Arc, Mapper>(fst, safe) {}
+  DecodeFst(const DecodeFst &fst, bool safe = false) : Base(fst, safe) {}
 
   // Makes a copy of this DecodeFst. See Fst<>::Copy() for further doc.
   DecodeFst *Copy(bool safe = false) const override {
@@ -586,8 +587,8 @@ class DecodeFst : public ArcMapFst<Arc, Arc, EncodeMapper<Arc>> {
   }
 
  private:
-  using ImplToFst<Impl>::GetImpl;
-  using ImplToFst<Impl>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 };
 
 // Specialization for EncodeFst.

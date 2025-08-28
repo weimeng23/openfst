@@ -19,7 +19,6 @@
 
 #include <string>
 
-#include <fst/arc.h>
 #include <fst/script/fst-class.h>
 #include <fst/script/script-impl.h>
 

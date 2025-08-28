@@ -227,8 +227,7 @@ void CopyWeights(const std::vector<Weight> &typed_weights,
 
 // Used for Replace operations.
 inline std::vector<std::pair<int64_t, const FstClass *>> BorrowPairs(
-    const std::vector<std::pair<int64_t, std::unique_ptr<const FstClass>>>
-        &pairs) {
+    const std::vector<std::pair<int64_t, std::unique_ptr<const FstClass>>> &        pairs) {
   std::vector<std::pair<int64_t, const FstClass *>> borrowed_pairs;
   borrowed_pairs.reserve(pairs.size());
   for (const auto &pair : pairs) {

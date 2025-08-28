@@ -69,18 +69,20 @@ struct IntersectFstOptions
 // Caveats: same as ComposeFst.
 template <class A>
 class IntersectFst : public ComposeFst<A> {
+  using Base = ComposeFst<A>;
+
  public:
   using Arc = A;
   using StateId = typename Arc::StateId;
   using Weight = typename Arc::Weight;
 
-  using ComposeFst<A>::CreateBase;
-  using ComposeFst<A>::CreateBase1;
-  using ComposeFst<A>::Properties;
+  using Base::CreateBase;
+  using Base::CreateBase1;
+  using Base::Properties;
 
   IntersectFst(const Fst<Arc> &fst1, const Fst<Arc> &fst2,
                const CacheOptions &opts = CacheOptions())
-      : ComposeFst<Arc>(CreateBase(fst1, fst2, opts)) {
+      : Base(CreateBase(fst1, fst2, opts)) {
     const bool acceptors =
         fst1.Properties(kAcceptor, true) && fst2.Properties(kAcceptor, true);
     if (!acceptors) {
@@ -92,7 +94,7 @@ class IntersectFst : public ComposeFst<A> {
   template <class M, class Filter, class StateTable>
   IntersectFst(const Fst<Arc> &fst1, const Fst<Arc> &fst2,
                const IntersectFstOptions<Arc, M, Filter, StateTable> &opts)
-      : ComposeFst<Arc>(CreateBase1(fst1, fst2, opts)) {
+      : Base(CreateBase1(fst1, fst2, opts)) {
     const bool acceptors =
         fst1.Properties(kAcceptor, true) && fst2.Properties(kAcceptor, true);
     if (!acceptors) {
@@ -102,8 +104,7 @@ class IntersectFst : public ComposeFst<A> {
   }
 
   // See Fst<>::Copy() for doc.
-  IntersectFst(const IntersectFst &fst, bool safe = false)
-      : ComposeFst<Arc>(fst, safe) {}
+  IntersectFst(const IntersectFst &fst, bool safe = false) : Base(fst, safe) {}
 
   // Get a copy of this IntersectFst. See Fst<>::Copy() for further doc.
   IntersectFst *Copy(bool safe = false) const override {
@@ -111,8 +112,8 @@ class IntersectFst : public ComposeFst<A> {
   }
 
  private:
-  using ImplToFst<internal::ComposeFstImplBase<A>>::GetImpl;
-  using ImplToFst<internal::ComposeFstImplBase<A>>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 };
 
 // Specialization for IntersectFst.

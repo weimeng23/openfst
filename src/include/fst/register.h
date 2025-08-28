@@ -113,11 +113,11 @@ class FstRegisterer : public GenericRegisterer<FstRegister<typename FST::Arc>> {
 // Users SHOULD NOT register within the fst namespace. To register an
 // FST for StdArc, for example, use:
 // namespace example {
-// using fst::StdArc;
+// using ::fst::StdArc;
 // REGISTER_FST(MyFst, StdArc);
 // }  // namespace example
 #define REGISTER_FST(FST, Arc) \
-  static fst::FstRegisterer<FST<Arc>> FST##_##Arc##_registerer
+  static ::fst::FstRegisterer<FST<Arc>> FST##_##Arc##_registerer
 
 // Converts an FST to the specified type.
 template <class Arc>

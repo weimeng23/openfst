@@ -17,8 +17,6 @@
 
 #include <fst/extensions/linear/linear-fst.h>
 #include <fst/arc.h>
-#include <fst/cache.h>
-#include <fst/float-weight.h>
 #include <fst/register.h>
 
 using fst::LinearClassifierFst;

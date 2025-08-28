@@ -18,12 +18,11 @@
 #include <fst/extensions/ngram/ngram-fst.h>
 
 #include <fst/arc.h>
-#include <fst/float-weight.h>
 #include <fst/register.h>
 
-using fst::LogArc;
-using fst::NGramFst;
-using fst::StdArc;
+using ::fst::LogArc;
+using ::fst::NGramFst;
+using ::fst::StdArc;
 
 REGISTER_FST(NGramFst, StdArc);
 REGISTER_FST(NGramFst, LogArc);

@@ -348,6 +348,7 @@ inline void NGramFstImpl<A>::GetStates(
 /*****************************************************************************/
 template <class A>
 class NGramFst : public ImplToExpandedFst<internal::NGramFstImpl<A>> {
+  using Base = ImplToExpandedFst<internal::NGramFstImpl<A>>;
   friend class ArcIterator<NGramFst<A>>;
   friend class NGramFstMatcher<A>;
 
@@ -356,25 +357,23 @@ class NGramFst : public ImplToExpandedFst<internal::NGramFstImpl<A>> {
   typedef typename A::StateId StateId;
   typedef typename A::Label Label;
   typedef typename A::Weight Weight;
-  typedef internal::NGramFstImpl<A> Impl;
+  using typename Base::Impl;
 
   explicit NGramFst(const Fst<A> &dst)
-      : ImplToExpandedFst<Impl>(std::make_shared<Impl>(dst, nullptr)) {}
+      : Base(std::make_shared<Impl>(dst, nullptr)) {}
 
   NGramFst(const Fst<A> &fst, std::vector<StateId> *order_out)
-      : ImplToExpandedFst<Impl>(std::make_shared<Impl>(fst, order_out)) {}
+      : Base(std::make_shared<Impl>(fst, order_out)) {}
 
   // Because the NGramFstImpl is a const stateless data structure, there
   // is never a need to do anything beside copy the reference.
-  NGramFst(const NGramFst<A> &fst, bool safe = false)
-      : ImplToExpandedFst<Impl>(fst, false) {}
+  NGramFst(const NGramFst<A> &fst, bool safe = false) : Base(fst, false) {}
 
-  NGramFst() : ImplToExpandedFst<Impl>(std::make_shared<Impl>()) {}
+  NGramFst() : Base(std::make_shared<Impl>()) {}
 
   // Non-standard constructor to initialize NGramFst directly from data. Caller
   // maintains ownership of data, which must outlive the NGramFst.
-  explicit NGramFst(const char *data)
-      : ImplToExpandedFst<Impl>(std::make_shared<Impl>()) {
+  explicit NGramFst(const char *data) : Base(std::make_shared<Impl>()) {
     GetMutableImpl()->Init(data, /*data_region=*/nullptr);
   }
 
@@ -476,11 +475,10 @@ class NGramFst : public ImplToExpandedFst<internal::NGramFstImpl<A>> {
   }
 
  private:
-  using ImplToExpandedFst<Impl, ExpandedFst<A>>::GetImpl;
-  using ImplToExpandedFst<Impl, ExpandedFst<A>>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 
-  explicit NGramFst(std::shared_ptr<Impl> impl)
-      : ImplToExpandedFst<Impl>(impl) {}
+  explicit NGramFst(std::shared_ptr<Impl> impl) : Base(impl) {}
 
   mutable NGramFstInst<A> inst_;
 };

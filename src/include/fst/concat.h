@@ -197,6 +197,8 @@ using ConcatFstOptions = RationalFstOptions;
 // arc is assumed and exclusive of caching.
 template <class A>
 class ConcatFst : public RationalFst<A> {
+  using Base = RationalFst<A>;
+
  public:
   using Arc = A;
   using StateId = typename Arc::StateId;
@@ -222,8 +224,8 @@ class ConcatFst : public RationalFst<A> {
   }
 
  private:
-  using ImplToFst<internal::RationalFstImpl<Arc>>::GetImpl;
-  using ImplToFst<internal::RationalFstImpl<Arc>>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 };
 
 // Specialization for ConcatFst.

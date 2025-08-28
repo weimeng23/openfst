@@ -842,6 +842,14 @@ class DefaultCacheStore
   }
 };
 
+template <class Arc>
+class GCHashCacheStore
+    : public GCCacheStore<FirstCacheStore<HashCacheStore<CacheState<Arc>>>> {
+ public:
+  explicit GCHashCacheStore(const CacheOptions &opts)
+      : GCCacheStore<FirstCacheStore<HashCacheStore<CacheState<Arc>>>>(opts) {}
+};
+
 namespace internal {
 
 // This class is used to cache FST elements stored in states of type State

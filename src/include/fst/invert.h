@@ -105,20 +105,21 @@ inline void Invert(MutableFst<Arc> *fst) {
 // caching.
 template <class A>
 class InvertFst : public ArcMapFst<A, A, InvertMapper<A>> {
+  using Base = ArcMapFst<A, A, InvertMapper<A>>;
+
  public:
   using Arc = A;
 
   using Mapper = InvertMapper<Arc>;
-  using Impl = internal::ArcMapFstImpl<A, A, InvertMapper<A>>;
+  using typename Base::Impl;
 
-  explicit InvertFst(const Fst<Arc> &fst) : ArcMapFst<Arc, Arc, Mapper>(fst) {
+  explicit InvertFst(const Fst<Arc> &fst) : Base(fst) {
     GetMutableImpl()->SetOutputSymbols(fst.InputSymbols());
     GetMutableImpl()->SetInputSymbols(fst.OutputSymbols());
   }
 
   // See Fst<>::Copy() for doc.
-  InvertFst(const InvertFst &fst, bool safe = false)
-      : ArcMapFst<Arc, Arc, Mapper>(fst, safe) {}
+  InvertFst(const InvertFst &fst, bool safe = false) : Base(fst, safe) {}
 
   // Get a copy of this InvertFst. See Fst<>::Copy() for further doc.
   InvertFst *Copy(bool safe = false) const override {
@@ -126,7 +127,7 @@ class InvertFst : public ArcMapFst<A, A, InvertMapper<A>> {
   }
 
  private:
-  using ImplToFst<Impl>::GetMutableImpl;
+  using Base::GetMutableImpl;
 };
 
 // Specialization for InvertFst.

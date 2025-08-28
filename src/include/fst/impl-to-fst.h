@@ -37,9 +37,10 @@ namespace fst {
 // Thread-unsafe due to Properties (a const function) calling
 // Impl::SetProperties. TODO(jrosenstock): Make thread-compatible.
 // Impl's copy constructor must produce a thread-safe copy.
-template <class Impl, class FST = Fst<typename Impl::Arc>>
+template <class I, class FST = Fst<typename I::Arc>>
 class ImplToFst : public FST {
  public:
+  using Impl = I;
   using Arc = typename Impl::Arc;
   using StateId = typename Arc::StateId;
   using Weight = typename Arc::Weight;
@@ -127,7 +128,7 @@ class ImplToFst : public FST {
   // Returns a ref-counted smart poiner to the implementation.
   std::shared_ptr<Impl> GetSharedImpl() const { return impl_; }
 
-  bool Unique() const { return impl_.unique(); }
+  bool Unique() const { return impl_.use_count() == 1; }
 
   void SetImpl(std::shared_ptr<Impl> impl) { impl_ = std::move(impl); }
 

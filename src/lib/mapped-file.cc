@@ -22,6 +22,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <new>
 
 #ifdef _WIN32
 #include <io.h>         // for _get_osfhandle, _open
@@ -68,7 +69,8 @@ MappedFile::~MappedFile() {
 #endif
     } else {
       if (region_.data) {
-        operator delete(static_cast<char *>(region_.data) - region_.offset);
+        operator delete(region_.data, region_.size,
+                        std::align_val_t{region_.offset});
       }
     }
   }
@@ -199,12 +201,10 @@ MappedFile *MappedFile::Allocate(size_t size, size_t align) {
   region.data = nullptr;
   region.offset = 0;
   if (size > 0) {
-    // TODO(jrosenstock,sorenj): Use std::align() when that is no longer banned.
-    // Use std::aligned_alloc() when C++17 is allowed.
-    char *buffer = static_cast<char *>(operator new(size + align));
-    uintptr_t address = reinterpret_cast<uintptr_t>(buffer);
-    region.offset = align - (address % align);
-    region.data = buffer + region.offset;
+    region.offset = align;
+    region.data = static_cast<char *>(operator new(
+        size, std::align_val_t{align}
+        ));
   }
   region.mmap = nullptr;
   region.size = size;

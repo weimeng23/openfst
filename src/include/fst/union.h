@@ -135,6 +135,8 @@ using UnionFstOptions = RationalFstOptions;
 // arc is assumed and exclusive of caching.
 template <class A>
 class UnionFst : public RationalFst<A> {
+  using Base = RationalFst<A>;
+
  public:
   using Arc = A;
   using StateId = typename Arc::StateId;
@@ -146,13 +148,12 @@ class UnionFst : public RationalFst<A> {
 
   UnionFst(const Fst<Arc> &fst1, const Fst<Arc> &fst2,
            const UnionFstOptions &opts)
-      : RationalFst<Arc>(opts) {
+      : Base(opts) {
     GetMutableImpl()->InitUnion(fst1, fst2);
   }
 
   // See Fst<>::Copy() for doc.
-  UnionFst(const UnionFst &fst, bool safe = false)
-      : RationalFst<Arc>(fst, safe) {}
+  UnionFst(const UnionFst &fst, bool safe = false) : Base(fst, safe) {}
 
   // Gets a copy of this UnionFst. See Fst<>::Copy() for further doc.
   UnionFst *Copy(bool safe = false) const override {
@@ -160,8 +161,8 @@ class UnionFst : public RationalFst<A> {
   }
 
  private:
-  using ImplToFst<internal::RationalFstImpl<Arc>>::GetImpl;
-  using ImplToFst<internal::RationalFstImpl<Arc>>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 };
 
 // Specialization for UnionFst.

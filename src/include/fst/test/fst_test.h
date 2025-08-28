@@ -213,8 +213,7 @@ class FstTester {
   template <class G>
   void TestIO(const G &fst) const {
     const std::string filename = FST_FLAGS_tmpdir + "/test.fst";
-    const std::string aligned =
-        FST_FLAGS_tmpdir + "/aligned.fst";
+    const std::string aligned = FST_FLAGS_tmpdir + "/aligned.fst";
     {
       // write/read
       CHECK(fst.Write(filename));

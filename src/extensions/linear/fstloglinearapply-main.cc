@@ -21,10 +21,7 @@
 #include <fst/flags.h>
 #include <fst/log.h>
 #include <fst/extensions/linear/loglinear-apply.h>
-#include <fst/arc.h>
-#include <fst/cache.h>
 #include <fst/fst.h>
-#include <fst/pair-weight.h>
 #include <fst/vector-fst.h>
 
 DECLARE_bool(normalize);

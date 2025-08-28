@@ -322,6 +322,8 @@ class SynchronizeFstImpl : public CacheImpl<Arc> {
 // counting, delegating most methods to ImplToFst.
 template <class A>
 class SynchronizeFst : public ImplToFst<internal::SynchronizeFstImpl<A>> {
+  using Base = ImplToFst<internal::SynchronizeFstImpl<A>>;
+
  public:
   using Arc = A;
   using StateId = typename Arc::StateId;
@@ -329,18 +331,18 @@ class SynchronizeFst : public ImplToFst<internal::SynchronizeFstImpl<A>> {
 
   using Store = DefaultCacheStore<Arc>;
   using State = typename Store::State;
-  using Impl = internal::SynchronizeFstImpl<A>;
+  using typename Base::Impl;
 
   friend class ArcIterator<SynchronizeFst<A>>;
   friend class StateIterator<SynchronizeFst<A>>;
 
   explicit SynchronizeFst(const Fst<A> &fst, const SynchronizeFstOptions &opts =
                                                  SynchronizeFstOptions())
-      : ImplToFst<Impl>(std::make_shared<Impl>(fst, opts)) {}
+      : Base(std::make_shared<Impl>(fst, opts)) {}
 
   // See Fst<>::Copy() for doc.
   SynchronizeFst(const SynchronizeFst &fst, bool safe = false)
-      : ImplToFst<Impl>(fst, safe) {}
+      : Base(fst, safe) {}
 
   // Gets a copy of this SynchronizeFst. See Fst<>::Copy() for further doc.
   SynchronizeFst *Copy(bool safe = false) const override {
@@ -354,8 +356,8 @@ class SynchronizeFst : public ImplToFst<internal::SynchronizeFstImpl<A>> {
   }
 
  private:
-  using ImplToFst<Impl>::GetImpl;
-  using ImplToFst<Impl>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 
   SynchronizeFst &operator=(const SynchronizeFst &) = delete;
 };

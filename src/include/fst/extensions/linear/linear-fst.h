@@ -470,6 +470,8 @@ inline LinearTaggerFstImpl<A> *LinearTaggerFstImpl<A>::Read(
 // reference counting, delegating most methods to ImplToFst.
 template <class A>
 class LinearTaggerFst : public ImplToFst<internal::LinearTaggerFstImpl<A>> {
+  using Base = ImplToFst<internal::LinearTaggerFstImpl<A>>;
+
  public:
   friend class ArcIterator<LinearTaggerFst<A>>;
   friend class StateIterator<LinearTaggerFst<A>>;
@@ -481,24 +483,23 @@ class LinearTaggerFst : public ImplToFst<internal::LinearTaggerFstImpl<A>> {
   typedef typename A::StateId StateId;
   typedef DefaultCacheStore<A> Store;
   typedef typename Store::State State;
-  using Impl = internal::LinearTaggerFstImpl<A>;
+  using typename Base::Impl;
 
-  LinearTaggerFst() : ImplToFst<Impl>(std::make_shared<Impl>()) {}
+  LinearTaggerFst() : Base(std::make_shared<Impl>()) {}
 
   explicit LinearTaggerFst(LinearFstData<A> *data,
                            const SymbolTable *isyms = nullptr,
                            const SymbolTable *osyms = nullptr,
                            CacheOptions opts = CacheOptions())
-      : ImplToFst<Impl>(std::make_shared<Impl>(data, isyms, osyms, opts)) {}
+      : Base(std::make_shared<Impl>(data, isyms, osyms, opts)) {}
 
-  explicit LinearTaggerFst(const Fst<A> &fst)
-      : ImplToFst<Impl>(std::make_shared<Impl>()) {
+  explicit LinearTaggerFst(const Fst<A> &fst) : Base(std::make_shared<Impl>()) {
     LOG(FATAL) << "LinearTaggerFst: no constructor from arbitrary FST.";
   }
 
   // See Fst<>::Copy() for doc.
   LinearTaggerFst(const LinearTaggerFst<A> &fst, bool safe = false)
-      : ImplToFst<Impl>(fst, safe) {}
+      : Base(fst, safe) {}
 
   // Get a copy of this LinearTaggerFst. See Fst<>::Copy() for further doc.
   LinearTaggerFst<A> *Copy(bool safe = false) const override {
@@ -554,11 +555,10 @@ class LinearTaggerFst : public ImplToFst<internal::LinearTaggerFstImpl<A>> {
   }
 
  private:
-  using ImplToFst<Impl>::GetImpl;
-  using ImplToFst<Impl>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 
-  explicit LinearTaggerFst(std::shared_ptr<Impl> impl)
-      : ImplToFst<Impl>(impl) {}
+  explicit LinearTaggerFst(std::shared_ptr<Impl> impl) : Base(impl) {}
 
   void operator=(const LinearTaggerFst<A> &fst) = delete;
 };
@@ -920,6 +920,8 @@ inline LinearClassifierFstImpl<A> *LinearClassifierFstImpl<A>::Read(
 template <class A>
 class LinearClassifierFst
     : public ImplToFst<internal::LinearClassifierFstImpl<A>> {
+  using Base = ImplToFst<internal::LinearClassifierFstImpl<A>>;
+
  public:
   friend class ArcIterator<LinearClassifierFst<A>>;
   friend class StateIterator<LinearClassifierFst<A>>;
@@ -931,25 +933,24 @@ class LinearClassifierFst
   typedef typename A::StateId StateId;
   typedef DefaultCacheStore<A> Store;
   typedef typename Store::State State;
-  using Impl = internal::LinearClassifierFstImpl<A>;
+  using typename Base::Impl;
 
-  LinearClassifierFst() : ImplToFst<Impl>(std::make_shared<Impl>()) {}
+  LinearClassifierFst() : Base(std::make_shared<Impl>()) {}
 
   explicit LinearClassifierFst(LinearFstData<A> *data, size_t num_classes,
                                const SymbolTable *isyms = nullptr,
                                const SymbolTable *osyms = nullptr,
                                CacheOptions opts = CacheOptions())
-      : ImplToFst<Impl>(
-            std::make_shared<Impl>(data, num_classes, isyms, osyms, opts)) {}
+      : Base(std::make_shared<Impl>(data, num_classes, isyms, osyms, opts)) {}
 
   explicit LinearClassifierFst(const Fst<A> &fst)
-      : ImplToFst<Impl>(std::make_shared<Impl>()) {
+      : Base(std::make_shared<Impl>()) {
     LOG(FATAL) << "LinearClassifierFst: no constructor from arbitrary FST.";
   }
 
   // See Fst<>::Copy() for doc.
   LinearClassifierFst(const LinearClassifierFst<A> &fst, bool safe = false)
-      : ImplToFst<Impl>(fst, safe) {}
+      : Base(fst, safe) {}
 
   // Get a copy of this LinearClassifierFst. See Fst<>::Copy() for further doc.
   LinearClassifierFst<A> *Copy(bool safe = false) const override {
@@ -1006,11 +1007,10 @@ class LinearClassifierFst
   }
 
  private:
-  using ImplToFst<Impl>::GetImpl;
-  using ImplToFst<Impl>::GetMutableImpl;
+  using Base::GetImpl;
+  using Base::GetMutableImpl;
 
-  explicit LinearClassifierFst(std::shared_ptr<Impl> impl)
-      : ImplToFst<Impl>(impl) {}
+  explicit LinearClassifierFst(std::shared_ptr<Impl> impl) : Base(impl) {}
 
   void operator=(const LinearClassifierFst<A> &fst) = delete;
 };

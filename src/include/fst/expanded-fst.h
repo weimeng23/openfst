@@ -134,9 +134,12 @@ using StdExpandedFst = ExpandedFst<StdArc>;
 // This is a helper class template useful for attaching an ExpandedFst
 // interface to its implementation, handling reference counting. It
 // delegates to ImplToFst the handling of the Fst interface methods.
-template <class Impl, class FST = ExpandedFst<typename Impl::Arc>>
-class ImplToExpandedFst : public ImplToFst<Impl, FST> {
+template <class I, class FST = ExpandedFst<typename I::Arc>>
+class ImplToExpandedFst : public ImplToFst<I, FST> {
+  using Base = ImplToFst<I, FST>;
+
  public:
+  using Impl = I;
   using Arc = typename FST::Arc;
   using StateId = typename Arc::StateId;
   using Weight = typename Arc::Weight;
@@ -144,13 +147,12 @@ class ImplToExpandedFst : public ImplToFst<Impl, FST> {
   StateId NumStates() const override { return GetImpl()->NumStates(); }
 
  protected:
-  using ImplToFst<Impl, FST>::GetImpl;
+  using Base::GetImpl;
 
-  explicit ImplToExpandedFst(std::shared_ptr<Impl> impl)
-      : ImplToFst<Impl, FST>(impl) {}
+  explicit ImplToExpandedFst(std::shared_ptr<Impl> impl) : Base(impl) {}
 
   ImplToExpandedFst(const ImplToExpandedFst &fst, bool safe)
-      : ImplToFst<Impl, FST>(fst, safe) {}
+      : Base(fst, safe) {}
 
   static Impl *Read(std::istream &strm, const FstReadOptions &opts) {
     return Impl::Read(strm, opts);

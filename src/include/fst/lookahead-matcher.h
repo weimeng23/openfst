@@ -23,17 +23,15 @@
 
 #include <sys/types.h>
 
+#include <algorithm>
 #include <cstdint>
 #include <memory>
-#include <string>
 #include <utility>
 #include <vector>
 
-#include <fst/flags.h>
 #include <fst/log.h>
 #include <fst/accumulator.h>
 #include <fst/add-on.h>
-#include <fst/const-fst.h>
 #include <fst/fst.h>
 #include <fst/label-reachable.h>
 #include <fst/matcher.h>
@@ -673,6 +671,7 @@ void RelabelForReachable(FST *fst, const Data &data,
     if (!save_relabel_ipairs.empty()) {
       std::vector<std::pair<Label, Label>> pairs;
       reachable.RelabelPairs(&pairs, /*avoid_collisions=*/true);
+      std::sort(pairs.begin(), pairs.end());  // Sort for deterministic output.
       WriteLabelPairs(save_relabel_ipairs, pairs);
     }
   } else {
@@ -681,6 +680,7 @@ void RelabelForReachable(FST *fst, const Data &data,
     if (!save_relabel_opairs.empty()) {
       std::vector<std::pair<Label, Label>> pairs;
       reachable.RelabelPairs(&pairs, /*avoid_collisions=*/true);
+      std::sort(pairs.begin(), pairs.end());  // Sort for deterministic output.
       WriteLabelPairs(save_relabel_opairs, pairs);
     }
   }

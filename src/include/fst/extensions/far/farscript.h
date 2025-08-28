@@ -196,7 +196,7 @@ void Info(FarInfoArgs *args) {
 
 void Info(const std::vector<std::string> &sources, const std::string &arc_type,
           const std::string &begin_key, const std::string &end_key,
-          const bool list_fsts);
+          bool list_fsts);
 
 using FarGetInfoArgs =
     std::tuple<const std::vector<std::string> &, const std::string &,
@@ -211,7 +211,7 @@ void GetInfo(FarGetInfoArgs *args) {
 
 void GetInfo(const std::vector<std::string> &sources,
              const std::string &arc_type, const std::string &begin_key,
-             const std::string &end_key, const bool list_fsts, FarInfoData *);
+             const std::string &end_key, bool list_fsts, FarInfoData *);
 
 using FarIsomorphicInnerArgs =
     std::tuple<FarReaderClass &, FarReaderClass &, float, std::string_view,
@@ -257,12 +257,11 @@ void PrintStrings(FarPrintStringsArgs *args) {
                                args->source_prefix, args->source_suffix);
 }
 
-void PrintStrings(FarReaderClass &reader, const FarEntryType entry_type,
-                  const TokenType token_type, const std::string &begin_key,
-                  const std::string &end_key, const bool print_key,
-                  const bool print_weight, const std::string &symbols_source,
-                  const bool initial_symbols, const int32_t generate_sources,
-                  const std::string &source_prefix,
+void PrintStrings(FarReaderClass &reader, FarEntryType entry_type,
+                  TokenType token_type, const std::string &begin_key,
+                  const std::string &end_key, bool print_key, bool print_weight,
+                  const std::string &symbols_source, bool initial_symbols,
+                  int32_t generate_sources, const std::string &source_prefix,
                   const std::string &source_suffix);
 
 }  // namespace script

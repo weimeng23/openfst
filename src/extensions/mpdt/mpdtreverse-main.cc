@@ -28,7 +28,6 @@
 #include <fst/log.h>
 #include <fst/extensions/mpdt/mpdtscript.h>
 #include <fst/extensions/mpdt/read_write_utils.h>
-#include <fst/script/arg-packs.h>
 #include <fst/script/fst-class.h>
 
 DECLARE_string(mpdt_parentheses);
